@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BlackCaviarBank.Infrastructure.Data
 {
-    public class AccountRepository : IRepository<Account>
+    public class AccountRepository : IRepository<Account, int>
     {
         private readonly ApplicationContext context;
 
