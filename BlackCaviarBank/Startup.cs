@@ -1,3 +1,4 @@
+using AutoMapper;
 using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Data;
@@ -23,12 +24,12 @@ namespace BlackCaviarBank
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<IRepository<Account>, AccountRepository>();
-            services.AddScoped<IRepository<Card>, CardRepository>();
-            services.AddScoped<IRepository<Notification>, NotificationRepository>();
-            services.AddScoped<IRepository<Service>, ServiceRepository>();
-            services.AddScoped<IRepository<Transaction>, TransactionRepository>();
-            services.AddScoped<IRepository<UserProfile>, UserProfileRepository>();
+            services.AddScoped<IRepository<Account, int>, AccountRepository>();
+            services.AddScoped<IRepository<Card, int>, CardRepository>();
+            services.AddScoped<IRepository<Notification, int>, NotificationRepository>();
+            services.AddScoped<IRepository<Service, int>, ServiceRepository>();
+            services.AddScoped<IRepository<Transaction, int>, TransactionRepository>();
+            services.AddScoped<IRepository<UserProfile, string>, UserProfileRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             services.AddDbContext<ApplicationContext>(options =>
