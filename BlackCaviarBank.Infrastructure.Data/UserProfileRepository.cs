@@ -13,20 +13,20 @@ namespace BlackCaviarBank.Infrastructure.Data
             this.context = context;
         }
 
-        public IEnumerable<UserProfile> GetAll() => context.UserProfiles;
+        public IEnumerable<UserProfile> GetAll() => context.Users;
 
-        public UserProfile Get(string id) => context.UserProfiles.Find(id);
+        public UserProfile Get(string id) => context.Users.Find(id);
 
-        public void Create(UserProfile userProfile) => context.UserProfiles.Add(userProfile);
+        public void Create(UserProfile userProfile) => context.Users.Add(userProfile);
 
-        public void Update(UserProfile userProfile) => context.UserProfiles.Update(userProfile);
+        public void Update(UserProfile userProfile) => context.Users.Update(userProfile);
 
         public void Delete(string id)
         {
             var userProfileToRemove = Get(id);
             if (userProfileToRemove != null)
             {
-                context.UserProfiles.Remove(userProfileToRemove);
+                context.Users.Remove(userProfileToRemove);
             }
         }
     }

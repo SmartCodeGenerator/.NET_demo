@@ -5,9 +5,8 @@ using System;
 
 namespace BlackCaviarBank.Infrastructure.Data
 {
-    public class ApplicationContext : IdentityDbContext
+    public class ApplicationContext : IdentityDbContext<UserProfile>
     {
-        public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Card> Cards { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
@@ -24,12 +23,14 @@ namespace BlackCaviarBank.Infrastructure.Data
             base.OnModelCreating(builder);
 
             builder.Entity<Account>().Property(a => a.AccountNumber).HasMaxLength(20).IsRequired();
+            builder.Entity<Account>().HasIndex(a => a.AccountNumber).IsUnique();
             builder.Entity<Account>().Property(a => a.Name).HasMaxLength(30).IsRequired();
             builder.Entity<Account>().Property(a => a.OpeningDate).HasDefaultValue(DateTime.Now).IsRequired();
             builder.Entity<Account>().Property(a => a.Balance).HasDefaultValue(0).IsRequired();
             builder.Entity<Account>().HasOne(a => a.Owner).WithMany(up => up.Accounts).HasForeignKey(a => a.OwnerId).OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Card>().Property(c => c.CardNumber).HasMaxLength(16).IsRequired();
+            builder.Entity<Card>().HasIndex(c => c.CardNumber).IsUnique();
             builder.Entity<Card>().Property(c => c.ExpirationDate).HasDefaultValue(DateTime.Now).IsRequired();
             builder.Entity<Card>().Property(c => c.PaymentSystem).HasDefaultValue("Visa").IsRequired();
             builder.Entity<Card>().Property(c => c.CVV2).HasMaxLength(3).IsRequired();
@@ -42,6 +43,7 @@ namespace BlackCaviarBank.Infrastructure.Data
             builder.Entity<Notification>().HasOne(n => n.Sender).WithMany(serv => serv.Notifications).HasForeignKey(n => n.SenderId).OnDelete(DeleteBehavior.SetNull);
 
             builder.Entity<Service>().Property(serv => serv.Name).HasMaxLength(30).IsRequired();
+            builder.Entity<Service>().HasIndex(serv => serv.Name).IsUnique();
             builder.Entity<Service>().Property(serv => serv.Price).HasDefaultValue(0).IsRequired();
 
             builder.Entity<SubscriptionSubscriber>().HasKey(ss => new { ss.SubscriberId, ss.SubscriptionId });
