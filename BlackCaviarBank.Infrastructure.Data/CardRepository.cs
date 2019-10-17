@@ -1,6 +1,7 @@
 ﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BlackCaviarBank.Infrastructure.Data
 {
@@ -15,7 +16,17 @@ namespace BlackCaviarBank.Infrastructure.Data
 
         public IEnumerable<Card> GetAll() => context.Cards;
 
+        public IEnumerable<Card> GetAllForUser(UserProfile user)
+        {
+            return context.Cards.Where(a => a.OwnerId.Equals(user.Id));
+        }
+
         public Card Get(int id) => context.Cards.Find(id);
+
+        public Card GetForUser(UserProfile user, int id)
+        {
+            return context.Cards.Where(a => a.OwnerId.Equals(user.Id)).FirstOrDefault(a => a.CardId.Equals(id));
+        }
 
         public void Create(Card card) => context.Cards.Add(card);
 

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
 {
+    [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -15,19 +16,37 @@ namespace BlackCaviarBank.Controllers
         private readonly UserManager<UserProfile> userManager;
         private readonly SignInManager<UserProfile> signInManager;
         private readonly UnitOfWork unitOfWork;
+        private readonly IMapper mapper;
 
-        public UsersController(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, IUnitOfWork unitOfWork)
+        public UsersController(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, IUnitOfWork unitOfWork, IMapper mapper)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
+            this.mapper = mapper;
         }
 
-        [HttpGet("Login/{id}")]
-        public ActionResult<UserProfile> Login(string id) => Ok(unitOfWork.UserProfiles.Get(id));
+        /// <summary>
+        /// Checks a specific AspNetUser by id.
+        /// </summary>
+        [HttpGet("Check/{id}")]
+        public ActionResult<UserProfile> Check(string id) => Ok(unitOfWork.UserProfiles.Get(id));
 
+        /// <summary>
+        /// Logins a specific AspNetUser by LoginUserDTO object.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /Login
+        ///     {
+        ///        "userName": "JoJo",
+        ///        "password": "yareyaredaze1",
+        ///        "rememberMe": true
+        ///     }
+        ///
+        /// </remarks>
         [HttpPost("Login")]
-        //[ValidateAntiForgeryToken]
         public async Task<ActionResult> Login(LoginUserDTO userData)
         {
             if (string.IsNullOrEmpty(userData.UserName))
@@ -45,16 +64,23 @@ namespace BlackCaviarBank.Controllers
 
             if (ModelState.IsValid)
             {
-                var result = await signInManager.PasswordSignInAsync(userData.UserName, userData.Password, userData.RememberMe.Value, false);
-                if (result.Succeeded)
+                if (!User.Identity.IsAuthenticated)
                 {
-                    var currentUser = await userManager.GetUserAsync(HttpContext.User);
-                    return Content($"{currentUser.UserName} has been signed in");
+                    var result = await signInManager.PasswordSignInAsync(userData.UserName, userData.Password, userData.RememberMe.Value, false);
+                    if (result.Succeeded)
+                    {
+                        return Ok("Authentication succeeded");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
+
+                        return Conflict(ModelState);
+                    }
                 }
                 else
                 {
-                    ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
-                    return Conflict(ModelState);
+                    return BadRequest($"{User.Identity.Name} is already authenticated");
                 }
             }
             else
@@ -63,22 +89,41 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
+        /// <summary>
+        /// Makes a specific AspNetUser log off.
+        /// </summary>
         [HttpPost("LogOut")]
-        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> LogOut()
         {
-            if (HttpContext.User.Identity.IsAuthenticated)
+            if (User.Identity.IsAuthenticated)
             {
-                var currentUser = await userManager.GetUserAsync(HttpContext.User);
+                var currentUser = await userManager.GetUserAsync(User);
                 await signInManager.SignOutAsync();
                 return Content($"{currentUser.UserName} has been signed out");
             }
             else
             {
-                return NotFound("No user is logged in");
+                return BadRequest("There is no authenticated user to be logged out");
             }
         }
 
+        /// <summary>
+        /// Registers a specific AspNetUser.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /Register
+        ///     {
+        ///        "userName": "JoJo",
+        ///        "email": "dio@gmail.com",
+        ///        "password": "yareyaredaze1",
+        ///        "passwordConfirm": "yareyaredaze1",
+        ///        "firstName": "Jotaro",
+        ///        "lastName": "Kujo"
+        ///     }
+        ///
+        /// </remarks>
         [HttpPost("Register")]
         public async Task<ActionResult<UserProfile>> Register(RegisterUserDTO userData)
         {
@@ -113,15 +158,14 @@ namespace BlackCaviarBank.Controllers
 
             if (ModelState.IsValid)
             {
-                var config = new MapperConfiguration(c => c.CreateMap<RegisterUserDTO, UserProfile>()).CreateMapper();
-                var user = config.Map<RegisterUserDTO, UserProfile>(userData);
+                var user = mapper.Map<UserProfile>(userData);
 
                 IdentityResult result = await userManager.CreateAsync(user, userData.Password);
                 if (result.Succeeded)
                 {
                     await signInManager.SignInAsync(user, false);
 
-                    await unitOfWork.Save();
+                    return CreatedAtAction(nameof(Check), new { id = user.Id }, user);
                 }
                 else
                 {
@@ -129,9 +173,9 @@ namespace BlackCaviarBank.Controllers
                     {
                         ModelState.AddModelError(error.Code, error.Description);
                     }
-                }
 
-                return CreatedAtAction(nameof(Login), new { id = user.Id }, user);
+                    return Conflict(ModelState);
+                }
             }
             else
             {
