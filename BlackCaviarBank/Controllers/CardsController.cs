@@ -4,6 +4,7 @@ using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,7 +30,7 @@ namespace BlackCaviarBank.Controllers
         /// <summary>
         /// Returns a collection of user`s cards.
         /// </summary>
-        [HttpGet("GetCards")]
+        [HttpGet]
         public async Task<ActionResult<List<Card>>> GetCards()
         {
             var user = await userManager.GetUserAsync(User);
@@ -47,7 +48,7 @@ namespace BlackCaviarBank.Controllers
         /// <summary>
         /// Returns a specific user`s card.
         /// </summary>
-        [HttpGet("GetCard/{id}")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<Card>> GetCard(int id)
         {
             var user = await userManager.GetUserAsync(User);
@@ -70,10 +71,9 @@ namespace BlackCaviarBank.Controllers
         ///
         ///     POST /BookCard
         ///     {
-        ///        "cardNumber": "0000000000000000",
         ///        "expirationDate": "2012-04-23T18:25:43.511Z",
         ///        "paymentSystem": "Visa",
-        ///        "cVV2: "000",
+        ///        "CVV2: "000",
         ///        "balance": 100000
         ///     }
         ///
@@ -85,14 +85,6 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                if (string.IsNullOrEmpty(data.CardNumber))
-                {
-                    ModelState.AddModelError("cardNumber", "Card number must not be empty");
-                }
-                if (!data.ExpirationDate.HasValue)
-                {
-                    ModelState.AddModelError("expDate", "Card expiration date must not be empty");
-                }
                 if (string.IsNullOrEmpty(data.PaymentSystem))
                 {
                     ModelState.AddModelError("paySys", "Card payment system must not be empty");
@@ -101,19 +93,11 @@ namespace BlackCaviarBank.Controllers
                 {
                     ModelState.AddModelError("cvv2", "Card CVV2 must not be empty");
                 }
-                if (!data.Balance.HasValue)
-                {
-                    ModelState.AddModelError("balance", "Card balance must not be empty");
-                }
-                if (data.CardNumber.Length != 16)
-                {
-                    ModelState.AddModelError("cardNumberLength", "Card number must contain 16 numbers");
-                }
                 if (data.CVV2.Length != 3)
                 {
                     ModelState.AddModelError("cvv2Length", "Card cvv2 must contain 3 numbers");
                 }
-                if (data.Balance.Value < 0)
+                if (data.Balance < 0)
                 {
                     ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
                 }
@@ -121,6 +105,12 @@ namespace BlackCaviarBank.Controllers
                 if (ModelState.IsValid)
                 {
                     var card = mapper.Map<Card>(data);
+
+                    var gen = new Random();
+                    var cardNum = new byte[16];
+                    gen.NextBytes(cardNum);
+
+                    card.CardNumber = cardNum.ToString();
                     card.Owner = user;
 
                     unitOfWork.Cards.Create(card);
@@ -146,9 +136,8 @@ namespace BlackCaviarBank.Controllers
         /// <remarks>
         /// Sample request:
         ///
-        ///     POST /UpdateCard
+        ///     PUT /UpdateCard
         ///     {
-        ///        "cardNumber": "0000000000000000",
         ///        "expirationDate": "2012-04-23T18:25:43.511Z",
         ///        "paymentSystem": "Visa",
         ///        "cVV2: "000",
@@ -156,21 +145,13 @@ namespace BlackCaviarBank.Controllers
         ///     }
         ///
         /// </remarks>
-        [HttpPost("UpdateCard/{id}")]
+        [HttpPut("{id}")]
         public async Task<ActionResult<Card>> UpdateCard(CardDTO data, int id)
         {
             var user = await userManager.GetUserAsync(User);
 
             if (user != null)
             {
-                if (string.IsNullOrEmpty(data.CardNumber))
-                {
-                    ModelState.AddModelError("cardNumber", "Card number must not be empty");
-                }
-                if (!data.ExpirationDate.HasValue)
-                {
-                    ModelState.AddModelError("expDate", "Card expiration date must not be empty");
-                }
                 if (string.IsNullOrEmpty(data.PaymentSystem))
                 {
                     ModelState.AddModelError("paySys", "Card payment system must not be empty");
@@ -179,19 +160,11 @@ namespace BlackCaviarBank.Controllers
                 {
                     ModelState.AddModelError("cvv2", "Card CVV2 must not be empty");
                 }
-                if (!data.Balance.HasValue)
-                {
-                    ModelState.AddModelError("balance", "Card balance must not be empty");
-                }
-                if (data.CardNumber.Length != 16)
-                {
-                    ModelState.AddModelError("cardNumberLength", "Card number must contain 16 numbers");
-                }
                 if (data.CVV2.Length != 3)
                 {
                     ModelState.AddModelError("cvv2Length", "Card cvv2 must contain 3 numbers");
                 }
-                if (data.Balance.Value < 0)
+                if (data.Balance < 0)
                 {
                     ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
                 }
@@ -199,6 +172,8 @@ namespace BlackCaviarBank.Controllers
                 if (ModelState.IsValid)
                 {
                     var target = unitOfWork.Cards.GetForUser(user, id);
+
+                    
 
                     unitOfWork.Cards.Update(target);
 
@@ -220,7 +195,7 @@ namespace BlackCaviarBank.Controllers
         /// <summary>
         /// Deletes a specific user`s card.
         /// </summary>
-        [HttpDelete("DeleteCard/{id}")]
+        [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCard(int id)
         {
             var user = await userManager.GetUserAsync(User);

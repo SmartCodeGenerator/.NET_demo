@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace BlackCaviarBank.Infrastructure.Data.Migrations
 {
-    public partial class FixDescriminator : Migration
+    public partial class Init3 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -89,9 +89,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                 {
                     AccountId = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    AccountNumber = table.Column<int>(maxLength: 20, nullable: false),
+                    AccountNumber = table.Column<string>(maxLength: 20, nullable: false),
                     Name = table.Column<string>(maxLength: 30, nullable: false),
-                    OpeningDate = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 13, 23, 25, 36, 370, DateTimeKind.Local).AddTicks(4143)),
+                    OpeningDate = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 23, 0, 1, 34, 202, DateTimeKind.Local).AddTicks(7900)),
                     Balance = table.Column<double>(nullable: false, defaultValue: 0.0),
                     InterestRate = table.Column<double>(nullable: false),
                     OwnerId = table.Column<string>(nullable: true)
@@ -198,10 +198,10 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                 {
                     CardId = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    CardNumber = table.Column<int>(maxLength: 16, nullable: false),
-                    ExpirationDate = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 13, 23, 25, 36, 376, DateTimeKind.Local).AddTicks(5920)),
+                    CardNumber = table.Column<string>(maxLength: 16, nullable: false),
+                    ExpirationDate = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 23, 0, 1, 34, 209, DateTimeKind.Local).AddTicks(7175)),
                     PaymentSystem = table.Column<string>(nullable: false, defaultValue: "Visa"),
-                    CVV2 = table.Column<int>(maxLength: 3, nullable: false),
+                    CVV2 = table.Column<string>(maxLength: 3, nullable: false),
                     Balance = table.Column<double>(nullable: false, defaultValue: 0.0),
                     OwnerId = table.Column<string>(nullable: true)
                 },
@@ -225,7 +225,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                     From = table.Column<string>(maxLength: 20, nullable: false),
                     To = table.Column<string>(maxLength: 20, nullable: false),
                     Amount = table.Column<double>(nullable: false, defaultValue: 0.0),
-                    Date = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 13, 23, 25, 36, 378, DateTimeKind.Local).AddTicks(7155)),
+                    Date = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 23, 0, 1, 34, 211, DateTimeKind.Local).AddTicks(8318)),
                     PayerId = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -246,7 +246,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                     NotificationId = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Text = table.Column<string>(maxLength: 150, nullable: false),
-                    Time = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 13, 23, 25, 36, 377, DateTimeKind.Local).AddTicks(2626)),
+                    Time = table.Column<DateTime>(nullable: false, defaultValue: new DateTime(2019, 10, 23, 0, 1, 34, 210, DateTimeKind.Local).AddTicks(2892)),
                     ReceiverId = table.Column<string>(nullable: true),
                     SenderId = table.Column<int>(nullable: true)
                 },
@@ -290,6 +290,12 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         principalColumn: "ServiceId",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_AccountNumber",
+                table: "Accounts",
+                column: "AccountNumber",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_OwnerId",
@@ -336,6 +342,12 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Cards_CardNumber",
+                table: "Cards",
+                column: "CardNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Cards_OwnerId",
                 table: "Cards",
                 column: "OwnerId");
@@ -349,6 +361,12 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                 name: "IX_Notifications_SenderId",
                 table: "Notifications",
                 column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Services_Name",
+                table: "Services",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubscriptionSubscriber_SubscriptionId",
