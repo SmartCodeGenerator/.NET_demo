@@ -93,23 +93,15 @@ namespace BlackCaviarBank.Controllers
                 {
                     ModelState.AddModelError("name", "Account name must not be empty");
                 }
-                if (!data.Balance.HasValue)
-                {
-                    ModelState.AddModelError("balance", "Account balance must not be empty");
-                }
-                if (!data.InterestRate.HasValue)
-                {
-                    ModelState.AddModelError("interestRate", "Account interest rate must not be empty");
-                }
                 if (data.AccountNumber.Length != 20)
                 {
                     ModelState.AddModelError("nameLength", "Account name must contain 20 numbers");
                 }
-                if (data.Balance.Value < 0)
+                if (data.Balance < 0)
                 {
                     ModelState.AddModelError("balanceValue", "Account balance must be greater or equal to 0");
                 }
-                if (data.InterestRate.Value < 0)
+                if (data.InterestRate < 0)
                 {
                     ModelState.AddModelError("interestRateValue", "Account interest rate must be greater or equal to 0");
                 }
@@ -143,7 +135,7 @@ namespace BlackCaviarBank.Controllers
         /// <remarks>
         /// Sample request:
         ///
-        ///     POST /UpdateAccount
+        ///     PUT /UpdateAccount
         ///     {
         ///        "accountNumber": "00000000000000000000",
         ///        "name": "JotaroKujoDreams",
@@ -167,23 +159,15 @@ namespace BlackCaviarBank.Controllers
                 {
                     ModelState.AddModelError("name", "Account name must not be empty");
                 }
-                if (!data.Balance.HasValue)
-                {
-                    ModelState.AddModelError("balance", "Account balance must not be empty");
-                }
-                if (!data.InterestRate.HasValue)
-                {
-                    ModelState.AddModelError("interestRate", "Account interest rate must not be empty");
-                }
                 if (data.AccountNumber.Length != 20)
                 {
                     ModelState.AddModelError("nameLength", "Account name must contain 20 numbers");
                 }
-                if (data.Balance.Value < 0)
+                if (data.Balance < 0)
                 {
                     ModelState.AddModelError("balanceValue", "Account balance must be greater or equal to 0");
                 }
-                if (data.InterestRate.Value < 0)
+                if (data.InterestRate < 0)
                 {
                     ModelState.AddModelError("interestRateValue", "Account interest rate must be greater or equal to 0");
                 }
@@ -191,6 +175,8 @@ namespace BlackCaviarBank.Controllers
                 if (ModelState.IsValid)
                 {
                     var target = unitOfWork.Accounts.GetForUser(user, id);
+
+                    target = mapper.Map<Account>(data);
 
                     unitOfWork.Accounts.Update(target);
 

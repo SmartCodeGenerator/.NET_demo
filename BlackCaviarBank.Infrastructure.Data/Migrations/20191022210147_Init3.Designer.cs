@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlackCaviarBank.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20191013202536_FixDescriminator")]
-    partial class FixDescriminator
+    [Migration("20191022210147_Init3")]
+    partial class Init3
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -28,8 +28,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("AccountNumber")
-                        .HasColumnType("int")
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(20)")
                         .HasMaxLength(20);
 
                     b.Property<double>("Balance")
@@ -49,12 +50,15 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 13, 23, 25, 36, 370, DateTimeKind.Local).AddTicks(4143));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 202, DateTimeKind.Local).AddTicks(7900));
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("AccountId");
+
+                    b.HasIndex("AccountNumber")
+                        .IsUnique();
 
                     b.HasIndex("OwnerId");
 
@@ -73,19 +77,21 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .HasColumnType("float")
                         .HasDefaultValue(0.0);
 
-                    b.Property<int>("CVV2")
-                        .HasColumnType("int")
+                    b.Property<string>("CVV2")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(3)")
                         .HasMaxLength(3);
 
-                    b.Property<int>("CardNumber")
-                        .HasColumnType("int")
+                    b.Property<string>("CardNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(16)")
                         .HasMaxLength(16);
 
                     b.Property<DateTime?>("ExpirationDate")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 13, 23, 25, 36, 376, DateTimeKind.Local).AddTicks(5920));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 209, DateTimeKind.Local).AddTicks(7175));
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
@@ -97,6 +103,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .HasDefaultValue("Visa");
 
                     b.HasKey("CardId");
+
+                    b.HasIndex("CardNumber")
+                        .IsUnique();
 
                     b.HasIndex("OwnerId");
 
@@ -125,7 +134,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 13, 23, 25, 36, 377, DateTimeKind.Local).AddTicks(2626));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 210, DateTimeKind.Local).AddTicks(2892));
 
                     b.HasKey("NotificationId");
 
@@ -154,6 +163,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .HasDefaultValue(0.0);
 
                     b.HasKey("ServiceId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Services");
                 });
@@ -189,7 +201,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 13, 23, 25, 36, 378, DateTimeKind.Local).AddTicks(7155));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 211, DateTimeKind.Local).AddTicks(8318));
 
                     b.Property<string>("From")
                         .IsRequired()

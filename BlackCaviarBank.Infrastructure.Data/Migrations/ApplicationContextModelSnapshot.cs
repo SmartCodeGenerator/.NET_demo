@@ -48,7 +48,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 14, 20, 35, 11, 502, DateTimeKind.Local).AddTicks(759));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 202, DateTimeKind.Local).AddTicks(7900));
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
@@ -75,8 +75,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .HasColumnType("float")
                         .HasDefaultValue(0.0);
 
-                    b.Property<int>("CVV2")
-                        .HasColumnType("int")
+                    b.Property<string>("CVV2")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(3)")
                         .HasMaxLength(3);
 
                     b.Property<string>("CardNumber")
@@ -88,7 +89,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 14, 20, 35, 11, 508, DateTimeKind.Local).AddTicks(3123));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 209, DateTimeKind.Local).AddTicks(7175));
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
@@ -131,7 +132,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 14, 20, 35, 11, 509, DateTimeKind.Local).AddTicks(1934));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 210, DateTimeKind.Local).AddTicks(2892));
 
                     b.HasKey("NotificationId");
 
@@ -198,7 +199,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 14, 20, 35, 11, 510, DateTimeKind.Local).AddTicks(7789));
+                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 211, DateTimeKind.Local).AddTicks(8318));
 
                     b.Property<string>("From")
                         .IsRequired()
