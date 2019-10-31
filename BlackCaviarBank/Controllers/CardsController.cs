@@ -2,11 +2,13 @@
 using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -19,17 +21,16 @@ namespace BlackCaviarBank.Controllers
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
         private readonly IMapper mapper;
+        private readonly IGenerator generator;
 
-        public CardsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper)
+        public CardsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IGenerator generator)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
             this.mapper = mapper;
+            this.generator = generator;
         }
 
-        /// <summary>
-        /// Returns a collection of user`s cards.
-        /// </summary>
         [HttpGet]
         public async Task<ActionResult<List<Card>>> GetCards()
         {
@@ -45,9 +46,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Returns a specific user`s card.
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<Card>> GetCard(int id)
         {
@@ -55,7 +53,16 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                return unitOfWork.Cards.GetForUser(user, id);
+                var result = unitOfWork.Cards.GetForUser(user, id);
+
+                if (result != null)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return NotFound($"there is no card with id {id}");
+                }
             }
             else
             {
@@ -63,17 +70,11 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Creates a specific user`s card.
-        /// </summary>
         /// <remarks>
         /// Sample request:
         ///
         ///     POST /BookCard
         ///     {
-        ///        "expirationDate": "2012-04-23T18:25:43.511Z",
-        ///        "paymentSystem": "Visa",
-        ///        "CVV2: "000",
         ///        "balance": 100000
         ///     }
         ///
@@ -85,18 +86,6 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                if (string.IsNullOrEmpty(data.PaymentSystem))
-                {
-                    ModelState.AddModelError("paySys", "Card payment system must not be empty");
-                }
-                if (string.IsNullOrEmpty(data.CVV2))
-                {
-                    ModelState.AddModelError("cvv2", "Card CVV2 must not be empty");
-                }
-                if (data.CVV2.Length != 3)
-                {
-                    ModelState.AddModelError("cvv2Length", "Card cvv2 must contain 3 numbers");
-                }
                 if (data.Balance < 0)
                 {
                     ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
@@ -106,12 +95,25 @@ namespace BlackCaviarBank.Controllers
                 {
                     var card = mapper.Map<Card>(data);
 
-                    var gen = new Random();
-                    var cardNum = new byte[16];
-                    gen.NextBytes(cardNum);
+                    card.CardNumber = generator.GetGeneratedCardNumber(unitOfWork.Cards.GetAll().ToList());
+                    
+                    var expDate = DateTime.Now;
+                    expDate = expDate.AddYears(5);
+                    card.ExpirationDate = expDate;
+                    
+                    var rand = new Random();
+                    int res = rand.Next(0, 2);
+                    card.PaymentSystem = res.Equals(0) ? "Visa" : "Mastercard";
 
-                    card.CardNumber = cardNum.ToString();
+                    var cvv2Builder = new StringBuilder();
+                    for(int i = 0; i < 3; i++)
+                    {
+                        cvv2Builder.Append(rand.Next(10));
+                    }
+                    card.CVV2 = cvv2Builder.ToString();
+
                     card.Owner = user;
+                    user.Cards.Add(card);
 
                     unitOfWork.Cards.Create(card);
 
@@ -130,17 +132,11 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Updates a specific user`s card.
-        /// </summary>
         /// <remarks>
         /// Sample request:
         ///
         ///     PUT /UpdateCard
         ///     {
-        ///        "expirationDate": "2012-04-23T18:25:43.511Z",
-        ///        "paymentSystem": "Visa",
-        ///        "cVV2: "000",
         ///        "balance": 100000
         ///     }
         ///
@@ -152,18 +148,6 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                if (string.IsNullOrEmpty(data.PaymentSystem))
-                {
-                    ModelState.AddModelError("paySys", "Card payment system must not be empty");
-                }
-                if (string.IsNullOrEmpty(data.CVV2))
-                {
-                    ModelState.AddModelError("cvv2", "Card CVV2 must not be empty");
-                }
-                if (data.CVV2.Length != 3)
-                {
-                    ModelState.AddModelError("cvv2Length", "Card cvv2 must contain 3 numbers");
-                }
                 if (data.Balance < 0)
                 {
                     ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
@@ -173,7 +157,7 @@ namespace BlackCaviarBank.Controllers
                 {
                     var target = unitOfWork.Cards.GetForUser(user, id);
 
-                    
+                    target.Balance = data.Balance.Equals(0) ? target.Balance : data.Balance;
 
                     unitOfWork.Cards.Update(target);
 
@@ -192,9 +176,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Deletes a specific user`s card.
-        /// </summary>
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCard(int id)
         {
@@ -203,12 +184,13 @@ namespace BlackCaviarBank.Controllers
             if (user != null)
             {
                 var target = unitOfWork.Cards.GetForUser(user, id);
+                var num = target.CardNumber;
 
-                unitOfWork.Cards.Delete(target.CardId);
+                unitOfWork.Cards.Delete(id);
 
                 await unitOfWork.Save();
 
-                return Ok($"Card with id {id} has been deleted");
+                return Ok($"Card with number {num} has been deleted");
             }
             else
             {

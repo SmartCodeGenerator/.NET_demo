@@ -27,6 +27,7 @@ namespace BlackCaviarBank.Infrastructure.Data
         {
             return context.Accounts.Where(a => a.OwnerId.Equals(user.Id)).FirstOrDefault(a => a.AccountId.Equals(id));
         }
+        public Account GetByNumberForUser(UserProfile user, string number) => context.Accounts.Where(a => a.OwnerId.Equals(user.Id)).FirstOrDefault(a => a.AccountNumber.Equals(number));
 
         public void Create(Account account) => context.Accounts.Add(account);
 

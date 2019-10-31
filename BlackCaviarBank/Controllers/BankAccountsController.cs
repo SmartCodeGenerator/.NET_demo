@@ -2,6 +2,7 @@
 using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -19,18 +20,17 @@ namespace BlackCaviarBank.Controllers
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
         private readonly IMapper mapper;
+        private readonly IGenerator generator;
 
-        public BankAccountsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper)
+        public BankAccountsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IGenerator generator)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
             this.mapper = mapper;
+            this.generator = generator;
         }
 
-        /// <summary>
-        /// Returns a collection of user`s accounts.
-        /// </summary>
-        [HttpGet("GetAccounts")]
+        [HttpGet]
         public async Task<ActionResult<List<Account>>> GetAccounts()
         {
             var user = await userManager.GetUserAsync(User);
@@ -45,17 +45,23 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Returns a specific user`s account.
-        /// </summary>
-        [HttpGet("GetAccount/{id}")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<Account>> GetAccount(int id)
         {
             var user = await userManager.GetUserAsync(User);
 
             if (user != null)
             {
-                return unitOfWork.Accounts.GetForUser(user, id);
+                var result = unitOfWork.Accounts.GetForUser(user, id);
+
+                if (result != null)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return NotFound($"there is no account with id {id}");
+                }
             }
             else
             {
@@ -63,15 +69,11 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Creates a specific user`s account.
-        /// </summary>
         /// <remarks>
         /// Sample request:
         ///
         ///     POST /CreateAccount
         ///     {
-        ///        "accountNumber": "00000000000000000000",
         ///        "name": "JotaroKujoDreams",
         ///        "balance": 100000,
         ///        "interestRate": 0.05
@@ -85,32 +87,27 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                if (string.IsNullOrEmpty(data.AccountNumber))
-                {
-                    ModelState.AddModelError("accountNumber", "Account number must not be empty");
-                }
                 if (string.IsNullOrEmpty(data.Name))
                 {
                     ModelState.AddModelError("name", "Account name must not be empty");
-                }
-                if (data.AccountNumber.Length != 20)
-                {
-                    ModelState.AddModelError("nameLength", "Account name must contain 20 numbers");
                 }
                 if (data.Balance < 0)
                 {
                     ModelState.AddModelError("balanceValue", "Account balance must be greater or equal to 0");
                 }
-                if (data.InterestRate < 0)
+                if (data.InterestRate < 0 || data.InterestRate > 1)
                 {
-                    ModelState.AddModelError("interestRateValue", "Account interest rate must be greater or equal to 0");
+                    ModelState.AddModelError("interestRateValue", "Account interest rate must be greater or equal to 0 and not greater than 1");
                 }
 
                 if (ModelState.IsValid)
                 {
                     var account = mapper.Map<Account>(data);
+
+                    account.AccountNumber = generator.GetGeneratedAccountNumber(unitOfWork.Accounts.GetAll().ToList());
                     account.OpeningDate = DateTime.Now;
                     account.Owner = user;
+                    user.Accounts.Add(account);
 
                     unitOfWork.Accounts.Create(account);
 
@@ -129,39 +126,27 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Updates a specific user`s account.
-        /// </summary>
         /// <remarks>
         /// Sample request:
         ///
         ///     PUT /UpdateAccount
         ///     {
-        ///        "accountNumber": "00000000000000000000",
         ///        "name": "JotaroKujoDreams",
         ///        "balance": 100000,
         ///        "interestRate": 0.05
         ///     }
         ///
         /// </remarks>
-        [HttpPut("UpdateAccount/{id}")]
+        [HttpPut("{id}")]
         public async Task<ActionResult<Account>> UpdateAccount(AccountDTO data, int id)
         {
             var user = await userManager.GetUserAsync(User);
 
             if (user != null)
             {
-                if (string.IsNullOrEmpty(data.AccountNumber))
-                {
-                    ModelState.AddModelError("accountNumber", "Account number must not be empty");
-                }
                 if (string.IsNullOrEmpty(data.Name))
                 {
                     ModelState.AddModelError("name", "Account name must not be empty");
-                }
-                if (data.AccountNumber.Length != 20)
-                {
-                    ModelState.AddModelError("nameLength", "Account name must contain 20 numbers");
                 }
                 if (data.Balance < 0)
                 {
@@ -176,10 +161,11 @@ namespace BlackCaviarBank.Controllers
                 {
                     var target = unitOfWork.Accounts.GetForUser(user, id);
 
-                    target = mapper.Map<Account>(data);
+                    target.Name = data.Name.Equals("string") ? target.Name : data.Name;
+                    target.Balance = data.Balance.Equals(0) ? target.Balance : data.Balance;
+                    target.InterestRate = data.InterestRate.Equals(0) ? target.InterestRate : data.InterestRate;
 
                     unitOfWork.Accounts.Update(target);
-
                     await unitOfWork.Save();
 
                     return CreatedAtAction(nameof(GetAccount), new { id = target.AccountId }, target);
@@ -195,11 +181,7 @@ namespace BlackCaviarBank.Controllers
             } 
         }
 
-
-        /// <summary>
-        /// Deletes a specific user`s account.
-        /// </summary>
-        [HttpDelete("CloseAccount/{id}")]
+        [HttpDelete("{id}")]
         public async Task<ActionResult> CloseAccount(int id)
         {
             var user = await userManager.GetUserAsync(User);
@@ -208,11 +190,13 @@ namespace BlackCaviarBank.Controllers
             {
                 var target = unitOfWork.Accounts.GetForUser(user, id);
 
+                string number = target.AccountNumber;
+
                 unitOfWork.Accounts.Delete(target.AccountId);
 
                 await unitOfWork.Save();
 
-                return Ok($"Account with id {id} has been closed");
+                return Ok($"Account with number {number} has been closed");
             }
             else
             {
