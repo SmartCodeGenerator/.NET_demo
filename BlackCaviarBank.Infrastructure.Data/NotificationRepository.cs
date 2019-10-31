@@ -1,6 +1,7 @@
 ﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BlackCaviarBank.Infrastructure.Data
 {
@@ -14,6 +15,7 @@ namespace BlackCaviarBank.Infrastructure.Data
         }
 
         public IEnumerable<Notification> GetAll() => context.Notifications;
+        public IEnumerable<Notification> GetAllForUser(UserProfile user) => context.Notifications.Where(n => n.ReceiverId.Equals(user.Id));
 
         public Notification Get(int id) => context.Notifications.Find(id);
 

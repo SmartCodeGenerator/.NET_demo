@@ -1,16 +1,20 @@
 using AutoMapper;
 using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
+using BlackCaviarBank.Infrastructure.Business;
 using BlackCaviarBank.Infrastructure.Data;
 using BlackCaviarBank.Mappings;
+using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 
 namespace BlackCaviarBank
 {
@@ -33,15 +37,27 @@ namespace BlackCaviarBank
             services.AddScoped<IRepository<Transaction, int>, TransactionRepository>();
             services.AddScoped<IRepository<UserProfile, string>, UserProfileRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IGenerator, NumberGenerator>();
+            services.AddScoped<IOperation, FinancialOperation>();
+            services.AddScoped<INotifier, ServiceNotifier>();
 
             services.AddDbContext<ApplicationContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<UserProfile, IdentityRole>()
+            services.AddIdentity<UserProfile, IdentityRole>(opts =>
+            {
+                opts.Password.RequiredLength = 7;
+                opts.Password.RequireDigit = true;
+                opts.Password.RequireNonAlphanumeric = false;
+                opts.Password.RequireLowercase = false;
+                opts.Password.RequireUppercase = false;
+            })
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddControllers();
+            services.AddControllers()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+                .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
             services.AddSwaggerGen(c =>
             {

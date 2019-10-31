@@ -27,6 +27,7 @@ namespace BlackCaviarBank.Infrastructure.Data
         {
             return context.Cards.Where(a => a.OwnerId.Equals(user.Id)).FirstOrDefault(a => a.CardId.Equals(id));
         }
+        public Card GetByNumberForUser(UserProfile user, string number) => context.Cards.Where(c => c.OwnerId.Equals(user.Id)).FirstOrDefault(c => c.CardNumber.Equals(number));
 
         public void Create(Card card) => context.Cards.Add(card);
 

@@ -26,15 +26,21 @@ namespace BlackCaviarBank.Controllers
             this.mapper = mapper;
         }
 
-        /// <summary>
-        /// Checks a specific AspNetUser by id.
-        /// </summary>
         [HttpGet("Check/{id}")]
-        public ActionResult<UserProfile> Check(string id) => Ok(unitOfWork.UserProfiles.Get(id));
+        public ActionResult<UserProfile> Check(string id)
+        {
+            var result = unitOfWork.UserProfiles.Get(id);
 
-        /// <summary>
-        /// Logins a specific AspNetUser by LoginUserDTO object.
-        /// </summary>
+            if(result != null)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return NotFound($"there is no user profile with id {id}");
+            }
+        }
+
         /// <remarks>
         /// Sample request:
         ///
@@ -89,9 +95,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Makes a specific AspNetUser log off.
-        /// </summary>
         [HttpPost("LogOut")]
         public async Task<IActionResult> LogOut()
         {
@@ -107,9 +110,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <summary>
-        /// Registers a specific AspNetUser.
-        /// </summary>
         /// <remarks>
         /// Sample request:
         ///
