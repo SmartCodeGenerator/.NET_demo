@@ -10,6 +10,7 @@ namespace BlackCaviarBank.Domain.Core
         public DateTime? OpeningDate { get; set; }
         public double Balance { get; set; }
         public double InterestRate { get; set; }
+        public bool IsBlocked { get; set; }
 
         public string OwnerId { get; set; }
         public UserProfile Owner { get; set; }

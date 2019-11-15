@@ -1,9 +1,15 @@
 ﻿using AutoMapper;
 using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
+using BlackCaviarBank.Infrastructure.Business;
 using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -72,16 +78,38 @@ namespace BlackCaviarBank.Controllers
             {
                 if (!User.Identity.IsAuthenticated)
                 {
-                    var result = await signInManager.PasswordSignInAsync(userData.UserName, userData.Password, userData.RememberMe.Value, false);
-                    if (result.Succeeded)
+                    IAuthenticationOptions options = new JWTAuthenticationOptions();
+                    options.Claims = new Claim[]
                     {
-                        return Ok("Authentication succeeded");
+                        new Claim(ClaimTypes.Name, userData.UserName),
+                        new Claim("password", userData.Password),
+                        new Claim("rememberMe", Convert.ToString(userData.RememberMe))
+                    };
+                    IAuthentication authentication = new JWTService(options.SecretKey);
+                    string token = authentication.GenerateToken(options);
+                    if (!authentication.IsTokenValid(token))
+                    {
+                        throw new UnauthorizedAccessException();
                     }
                     else
                     {
-                        ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
+                        List<Claim> claims = authentication.GetTokenClaims(token).ToList();
 
-                        return Conflict(ModelState);
+                        var userName = claims.FirstOrDefault(c => c.Type.Equals(ClaimTypes.Name)).Value;
+                        var password = claims.FirstOrDefault(c => c.Type.Equals("password")).Value;
+                        var isPersistent = claims.FirstOrDefault(c => c.Type.Equals("rememberMe")).Value;
+
+                        var result = await signInManager.PasswordSignInAsync(userName, password, Convert.ToBoolean(isPersistent), false);
+                        if (result.Succeeded)
+                        {
+                            return Ok("Authentication succeeded");
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
+
+                            return Conflict(ModelState);
+                        }
                     }
                 }
                 else

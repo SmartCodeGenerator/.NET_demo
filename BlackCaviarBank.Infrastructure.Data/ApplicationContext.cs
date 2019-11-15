@@ -28,6 +28,7 @@ namespace BlackCaviarBank.Infrastructure.Data
             builder.Entity<Account>().Property(a => a.OpeningDate).HasDefaultValue(DateTime.Now).IsRequired();
             builder.Entity<Account>().Property(a => a.Balance).HasDefaultValue(0).IsRequired();
             builder.Entity<Account>().HasOne(a => a.Owner).WithMany(up => up.Accounts).HasForeignKey(a => a.OwnerId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Account>().Property(a => a.IsBlocked).HasDefaultValue(false);
 
             builder.Entity<Card>().Property(c => c.CardNumber).HasMaxLength(16).IsRequired();
             builder.Entity<Card>().HasIndex(c => c.CardNumber).IsUnique();
@@ -36,6 +37,7 @@ namespace BlackCaviarBank.Infrastructure.Data
             builder.Entity<Card>().Property(c => c.CVV2).HasMaxLength(3).IsRequired();
             builder.Entity<Card>().Property(c => c.Balance).HasDefaultValue(0).IsRequired();
             builder.Entity<Card>().HasOne(c => c.Owner).WithMany(up => up.Cards).HasForeignKey(c => c.OwnerId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Card>().Property(c => c.IsBlocked).HasDefaultValue(false);
 
             builder.Entity<Notification>().Property(n => n.Text).HasMaxLength(150).IsRequired();
             builder.Entity<Notification>().Property(n => n.Time).HasDefaultValue(DateTime.Now).IsRequired();
@@ -58,6 +60,8 @@ namespace BlackCaviarBank.Infrastructure.Data
 
             builder.Entity<UserProfile>().Property(up => up.FirstName).HasMaxLength(20).IsRequired();
             builder.Entity<UserProfile>().Property(up => up.LastName).HasMaxLength(20).IsRequired();
+            builder.Entity<UserProfile>().Property(up => up.IsBanned).HasDefaultValue(false).IsRequired(false);
+            builder.Entity<UserProfile>().Property(up => up.ProfileImage).IsRequired(false);
         }
     }
 }

@@ -7,6 +7,8 @@ namespace BlackCaviarBank.Domain.Core
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
+        public bool? IsBanned { get; set; }
+        public byte[] ProfileImage { get; set; }
 
         public List<Card> Cards { get; set; } = new List<Card>();
         public List<Account> Accounts { get; set; } = new List<Account>();
