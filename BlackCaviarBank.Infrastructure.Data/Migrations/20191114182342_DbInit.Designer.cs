@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BlackCaviarBank.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20191022210147_Init3")]
-    partial class Init3
+    [Migration("20191114182342_DbInit")]
+    partial class DbInit
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -41,6 +41,11 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                     b.Property<double>("InterestRate")
                         .HasColumnType("float");
 
+                    b.Property<bool>("IsBlocked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(30)")
@@ -50,7 +55,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 202, DateTimeKind.Local).AddTicks(7900));
+                        .HasDefaultValue(new DateTime(2019, 11, 14, 20, 23, 27, 750, DateTimeKind.Local).AddTicks(4146));
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
@@ -91,7 +96,12 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 209, DateTimeKind.Local).AddTicks(7175));
+                        .HasDefaultValue(new DateTime(2019, 11, 14, 20, 23, 27, 757, DateTimeKind.Local).AddTicks(3390));
+
+                    b.Property<bool>("IsBlocked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
@@ -134,7 +144,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 210, DateTimeKind.Local).AddTicks(2892));
+                        .HasDefaultValue(new DateTime(2019, 11, 14, 20, 23, 27, 758, DateTimeKind.Local).AddTicks(35));
 
                     b.HasKey("NotificationId");
 
@@ -201,7 +211,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 10, 23, 0, 1, 34, 211, DateTimeKind.Local).AddTicks(8318));
+                        .HasDefaultValue(new DateTime(2019, 11, 14, 20, 23, 27, 759, DateTimeKind.Local).AddTicks(5979));
 
                     b.Property<string>("From")
                         .IsRequired()
@@ -246,6 +256,11 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(20)")
                         .HasMaxLength(20);
+
+                    b.Property<bool>("IsBanned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("LastName")
                         .IsRequired()

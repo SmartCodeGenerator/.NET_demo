@@ -69,17 +69,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST /MakeTransaction
-        ///     {
-        ///        "from": "Jotaro",
-        ///        "to": "Dio",
-        ///        "amount": 100
-        ///     }
-        ///
-        /// </remarks>
         [HttpPost("MakeTransaction")]
         public async Task<ActionResult<Transaction>> MakeTransaction(TransactionDTO data)
         {
@@ -121,49 +110,70 @@ namespace BlackCaviarBank.Controllers
 
                         if(from != null)
                         {
-                            if (transaction.To.Length.Equals(16))
+                            if (!from.IsBlocked)
                             {
-                                var to = unitOfWork.Cards.GetByNumberForUser(user, transaction.To);
-
-                                if (to != null)
+                                if (transaction.To.Length.Equals(16))
                                 {
-                                    if(operation.ExecuteFromCardToCard(from, to, transaction.Amount))
+                                    var to = unitOfWork.Cards.GetByNumberForUser(user, transaction.To);
+
+                                    if (to != null)
                                     {
-                                        unitOfWork.Transactions.Create(transaction);
-                                        await unitOfWork.Save();
-                                        return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
+                                        if (!to.IsBlocked)
+                                        {
+                                            if (operation.ExecuteFromCardToCard(from, to, transaction.Amount))
+                                            {
+                                                unitOfWork.Transactions.Create(transaction);
+                                                await unitOfWork.Save();
+                                                return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
+                                            }
+                                            else
+                                            {
+                                                return BadRequest($"Not enough money on card {from.CardNumber}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            return BadRequest($"card {to.CardNumber} is blocked");
+                                        }
                                     }
                                     else
                                     {
-                                        return BadRequest($"Not enough money on card {from.CardNumber}");
+                                        return NotFound($"There is no card with number {transaction.To}");
                                     }
                                 }
                                 else
                                 {
-                                    return NotFound($"There is no card with number {transaction.To}");
+                                    var to = unitOfWork.Accounts.GetByNumberForUser(user, transaction.To);
+
+                                    if (to != null)
+                                    {
+                                        if (!to.IsBlocked)
+                                        {
+                                            if (operation.ExecuteFromCardToAccount(from, to, transaction.Amount))
+                                            {
+                                                unitOfWork.Transactions.Create(transaction);
+                                                await unitOfWork.Save();
+                                                return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
+                                            }
+                                            else
+                                            {
+                                                return BadRequest($"Not enough money on card {from.CardNumber}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            return BadRequest($"account {to.AccountNumber} is blocked");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        return NotFound($"There is no account with number {transaction.To}");
+                                    }
                                 }
                             }
                             else
                             {
-                                var to = unitOfWork.Accounts.GetByNumberForUser(user, transaction.To);
-
-                                if (to != null)
-                                {
-                                    if (operation.ExecuteFromCardToAccount(from, to, transaction.Amount))
-                                    {
-                                        unitOfWork.Transactions.Create(transaction);
-                                        await unitOfWork.Save();
-                                        return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
-                                    }
-                                    else
-                                    {
-                                        return BadRequest($"Not enough money on card {from.CardNumber}");
-                                    }
-                                }
-                                else
-                                {
-                                    return NotFound($"There is no account with number {transaction.To}");
-                                }
+                                return BadRequest($"card {from.CardNumber} is blocked");
                             }
                         }
                         else
@@ -177,49 +187,70 @@ namespace BlackCaviarBank.Controllers
 
                         if (from != null)
                         {
-                            if (transaction.To.Length.Equals(16))
+                            if (!from.IsBlocked)
                             {
-                                var to = unitOfWork.Cards.GetByNumberForUser(user, transaction.To);
-
-                                if (to != null)
+                                if (transaction.To.Length.Equals(16))
                                 {
-                                    if (operation.ExecuteFromAccountToCard(from, to, transaction.Amount))
+                                    var to = unitOfWork.Cards.GetByNumberForUser(user, transaction.To);
+
+                                    if (to != null)
                                     {
-                                        unitOfWork.Transactions.Create(transaction);
-                                        await unitOfWork.Save();
-                                        return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
+                                        if (!to.IsBlocked)
+                                        {
+                                            if (operation.ExecuteFromAccountToCard(from, to, transaction.Amount))
+                                            {
+                                                unitOfWork.Transactions.Create(transaction);
+                                                await unitOfWork.Save();
+                                                return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
+                                            }
+                                            else
+                                            {
+                                                return BadRequest($"Not enough money on account {from.AccountNumber}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            return BadRequest($"card {to.CardNumber} is blocked");
+                                        }
                                     }
                                     else
                                     {
-                                        return BadRequest($"Not enough money on account {from.AccountNumber}");
+                                        return NotFound($"There is no card with number {transaction.To}");
                                     }
                                 }
                                 else
                                 {
-                                    return NotFound($"There is no card with number {transaction.To}");
+                                    var to = unitOfWork.Accounts.GetByNumberForUser(user, transaction.To);
+
+                                    if (to != null)
+                                    {
+                                        if (!to.IsBlocked)
+                                        {
+                                            if (operation.ExecuteFromAccountToAccount(from, to, transaction.Amount))
+                                            {
+                                                unitOfWork.Transactions.Create(transaction);
+                                                await unitOfWork.Save();
+                                                return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
+                                            }
+                                            else
+                                            {
+                                                return BadRequest($"Not enough money on account {from.AccountNumber}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            return BadRequest($"account {to.AccountNumber} is blocked");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        return NotFound($"There is no account with number {transaction.To}");
+                                    }
                                 }
                             }
                             else
                             {
-                                var to = unitOfWork.Accounts.GetByNumberForUser(user, transaction.To);
-
-                                if (to != null)
-                                {
-                                    if (operation.ExecuteFromAccountToAccount(from, to, transaction.Amount))
-                                    {
-                                        unitOfWork.Transactions.Create(transaction);
-                                        await unitOfWork.Save();
-                                        return CreatedAtAction(nameof(GetTransaction), new { id = transaction.TransactionId }, transaction);
-                                    }
-                                    else
-                                    {
-                                        return BadRequest($"Not enough money on account {from.AccountNumber}");
-                                    }
-                                }
-                                else
-                                {
-                                    return NotFound($"There is no account with number {transaction.To}");
-                                }
+                                return BadRequest($"account {from.AccountNumber} is blocked");
                             }
                         }
                         else
@@ -227,13 +258,11 @@ namespace BlackCaviarBank.Controllers
                             return NotFound($"There is no account with number {transaction.From}");
                         }
                     }
-
                 }
                 else
                 {
                     return Conflict(ModelState);
                 }
-
             }
             else
             {
