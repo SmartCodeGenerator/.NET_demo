@@ -71,13 +71,21 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                user.IsBanned = true;
+                var roles = await userManager.GetRolesAsync(user);
+                if (roles.Contains("user"))
+                {
+                    user.IsBanned = true;
 
-                unitOfWork.UserProfiles.Update(user);
+                    unitOfWork.UserProfiles.Update(user);
 
-                await unitOfWork.Save();
+                    await unitOfWork.Save();
 
-                return Ok($"User {user.UserName} has been banned");
+                    return Ok($"User {user.UserName} has been banned");
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
             else
             {
@@ -92,13 +100,21 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                user.IsBanned = false;
+                var roles = await userManager.GetRolesAsync(user);
+                if (roles.Contains("user"))
+                {
+                    user.IsBanned = false;
 
-                unitOfWork.UserProfiles.Update(user);
+                    unitOfWork.UserProfiles.Update(user);
 
-                await unitOfWork.Save();
+                    await unitOfWork.Save();
 
-                return Ok($"User {user.UserName} has been unbanned");
+                    return Ok($"User {user.UserName} has been unbanned");
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
             else
             {

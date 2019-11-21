@@ -16,5 +16,8 @@ namespace BlackCaviarBank.Domain.Core
 
         public List<Notification> Notifications { get; set; } = new List<Notification>();
         public List<SubscriptionSubscriber> SubscriptionSubscribers { get; set; } = new List<SubscriptionSubscriber>();
+
+        public List<Contact> Contacts { get; set; } = new List<Contact>();
+        public List<Contact> ContactsOf { get; set; } = new List<Contact>();
     }
 }

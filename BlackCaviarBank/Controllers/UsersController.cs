@@ -78,12 +78,14 @@ namespace BlackCaviarBank.Controllers
             {
                 if (!User.Identity.IsAuthenticated)
                 {
-                    IAuthenticationOptions options = new JWTAuthenticationOptions();
-                    options.Claims = new Claim[]
+                    IAuthenticationOptions options = new JWTAuthenticationOptions
+                    {
+                        Claims = new Claim[]
                     {
                         new Claim(ClaimTypes.Name, userData.UserName),
                         new Claim("password", userData.Password),
                         new Claim("rememberMe", Convert.ToString(userData.RememberMe))
+                    }
                     };
                     IAuthentication authentication = new JWTService(options.SecretKey);
                     string token = authentication.GenerateToken(options);
@@ -99,16 +101,24 @@ namespace BlackCaviarBank.Controllers
                         var password = claims.FirstOrDefault(c => c.Type.Equals("password")).Value;
                         var isPersistent = claims.FirstOrDefault(c => c.Type.Equals("rememberMe")).Value;
 
-                        var result = await signInManager.PasswordSignInAsync(userName, password, Convert.ToBoolean(isPersistent), false);
-                        if (result.Succeeded)
+                        var user = await userManager.FindByNameAsync(userName);
+                        if (!user.IsBanned.Value)
                         {
-                            return Ok("Authentication succeeded");
+                            var result = await signInManager.PasswordSignInAsync(userName, password, Convert.ToBoolean(isPersistent), false);
+                            if (result.Succeeded)
+                            {
+                                return Ok($"{userName} has been authenticated successfully");
+                            }
+                            else
+                            {
+                                ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
+
+                                return Conflict(ModelState);
+                            }
                         }
                         else
                         {
-                            ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
-
-                            return Conflict(ModelState);
+                            return BadRequest($"user {userName} is banned");
                         }
                     }
                 }
@@ -191,6 +201,13 @@ namespace BlackCaviarBank.Controllers
                 IdentityResult result = await userManager.CreateAsync(user, userData.Password);
                 if (result.Succeeded)
                 {
+                    await userManager.AddToRoleAsync(user, "user");
+
+                    user.ProfileImage = System.IO.File.ReadAllBytes(@"/MyStaticFiles/images/user_icon.svg");
+
+                    unitOfWork.UserProfiles.Update(user);
+                    await unitOfWork.Save();
+
                     await signInManager.SignInAsync(user, false);
 
                     return CreatedAtAction(nameof(Check), new { id = user.Id }, user);

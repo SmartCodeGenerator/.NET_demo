@@ -3,6 +3,7 @@ using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Data;
 using BlackCaviarBank.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -29,9 +30,11 @@ namespace BlackCaviarBank.Controllers
             this.operation = operation;
         }
 
+        [Authorize(Roles = "admin")]
         [HttpGet]
         public ActionResult<List<Service>> GetAllServices() => unitOfWork.Services.GetAll().ToList();
 
+        [Authorize(Roles = "admin")]
         [HttpGet("{id}")]
         public ActionResult<Service> GetService(int id)
         {
@@ -47,6 +50,7 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("ForCurrentUser")]
         public async Task<ActionResult<List<Service>>> GetAllForCurrentUser()
         {
@@ -72,6 +76,7 @@ namespace BlackCaviarBank.Controllers
         ///     }
         ///
         /// </remarks>
+        [Authorize(Roles = "admin")]
         [HttpPost("RegisterService")]
         public async Task<ActionResult<Service>> CreateService(ServiceDTO data)
         {
@@ -106,6 +111,7 @@ namespace BlackCaviarBank.Controllers
         ///     }
         ///
         /// </remarks>
+        [Authorize(Roles = "admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<Service>> UpdateService(ServiceDTO data, int id)
         {
@@ -135,6 +141,7 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> RemoveService(int id)
         {
@@ -158,6 +165,7 @@ namespace BlackCaviarBank.Controllers
         ///     }
         ///
         /// </remarks>
+        [Authorize]
         [HttpPost("SubscribeOnService")]
         public async Task<ActionResult> SubcribeOnService(SubscriptionDTO data)
         {
