@@ -62,6 +62,10 @@ namespace BlackCaviarBank.Infrastructure.Data
             builder.Entity<UserProfile>().Property(up => up.LastName).HasMaxLength(20).IsRequired();
             builder.Entity<UserProfile>().Property(up => up.IsBanned).HasDefaultValue(false).IsRequired(false);
             builder.Entity<UserProfile>().Property(up => up.ProfileImage).IsRequired(false);
+
+            builder.Entity<Contact>().HasKey(cn => new { cn.ContactId, cn.OwnerId });
+            builder.Entity<Contact>().HasOne(cn => cn.ContactProfile).WithMany(up => up.ContactsOf).HasForeignKey(cn => cn.ContactId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<Contact>().HasOne(cn => cn.Owner).WithMany(up => up.Contacts).HasForeignKey(cn => cn.OwnerId);
         }
     }
 }

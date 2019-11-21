@@ -3,6 +3,7 @@ using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Data;
 using BlackCaviarBank.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -29,9 +30,11 @@ namespace BlackCaviarBank.Controllers
             this.notifier = notifier;
         }
 
+        [Authorize(Roles = "admin")]
         [HttpGet]
         public ActionResult<List<Notification>> GetAllNotifications() => unitOfWork.Notifications.GetAll().ToList();
 
+        [Authorize(Roles = "admin")]
         [HttpGet("{id}")]
         public ActionResult<Notification> GetNotification(int id)
         {
@@ -47,6 +50,7 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("ForCurrentUser")]
         public async Task<ActionResult<List<Notification>>> GetAllForCurrentUser()
         {
@@ -73,6 +77,7 @@ namespace BlackCaviarBank.Controllers
         ///     }
         ///
         /// </remarks>
+        [Authorize(Roles = "admin")]
         [HttpPost("SendForUser")]
         public async Task<ActionResult<Notification>> SendNotificationForUser(UserNotificationDTO data)
         {
@@ -122,6 +127,7 @@ namespace BlackCaviarBank.Controllers
         ///     }
         ///
         /// </remarks>
+        [Authorize(Roles = "admin")]
         [HttpPost("SendForSubscribers")]
         public async Task<ActionResult<List<Notification>>> SendNotificationForSubscribers(SubscribersNotificationDTO data)
         {
@@ -155,6 +161,7 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteNotification(int id)
         {

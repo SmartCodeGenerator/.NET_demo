@@ -1,6 +1,5 @@
 ﻿using MimeKit;
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Business
@@ -11,7 +10,7 @@ namespace BlackCaviarBank.Infrastructure.Business
         {
             var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("Администрация сайта", "login@yandex.ru"));
+            emailMessage.From.Add(new MailboxAddress("Администрация сайта", "alex.jeffrey.student@gmail.com"));
             emailMessage.To.Add(new MailboxAddress("", email));
             emailMessage.Subject = subject;
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
@@ -21,8 +20,11 @@ namespace BlackCaviarBank.Infrastructure.Business
 
             using (var client = new SmtpClient())
             {
-                client.UseDefaultCredentials = false;
-                client.Credentials = new NetworkCredential("username", "password");
+                await client.ConnectAsync("smtp.gmail.com", 465, true);
+                await client.AuthenticateAsync("alex.jeffrey.student@gmail.com", "greedIsgood245");
+                await client.SendAsync(emailMessage);
+
+                await client.DisconnectAsync(true);
             }
         }
     }

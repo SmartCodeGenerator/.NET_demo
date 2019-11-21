@@ -6,7 +6,9 @@ using BlackCaviarBank.Infrastructure.Data.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -370,6 +372,84 @@ namespace BlackCaviarBank.Controllers
             else
             {
                 return Conflict(ModelState);
+            }
+        }
+
+        [HttpGet("Contacts")]
+        public async Task<ActionResult<List<UserProfile>>> GetContacts()
+        {
+            var user = await userManager.GetUserAsync(User);
+
+            var contacts = new List<UserProfile>();
+            foreach(var contact in user.Contacts)
+            {
+                contacts.Add(contact.ContactProfile);
+            }
+
+            return Ok(contacts);
+        }
+
+        [HttpGet("Contacts/{userName}")]
+        public async Task<ActionResult<UserProfile>> GetContact(string userName)
+        {
+            var user = await userManager.GetUserAsync(User);
+
+            var contact = user.Contacts.FirstOrDefault(cn => cn.ContactProfile.UserName.Equals(userName));
+            if (contact != null)
+            {
+                return Ok(contact.ContactProfile);
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpPost("AddContact")]
+        public async Task<ActionResult<UserProfile>> AddContact(string userName)
+        {
+            var user = await userManager.GetUserAsync(User);
+
+            var target = unitOfWork.UserProfiles.GetByUserName(userName);
+            if (target != null)
+            {
+                var contact = new Contact { Owner = user, ContactProfile = target };
+                user.Contacts.Add(contact);
+                user.ContactsOf.Add(contact);
+                await unitOfWork.Save();
+                return CreatedAtAction(nameof(GetContact), new { userName = target.UserName }, target);
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpDelete("RemoveContact/{userName}")]
+        public async Task<ActionResult> DeleteContact(string userName)
+        {
+            var user = await userManager.GetUserAsync(User);
+
+            var target = unitOfWork.UserProfiles.GetByUserName(userName);
+            if (target != null)
+            {
+                var contact = user.Contacts.FirstOrDefault(cn => cn.ContactId.Equals(target.Id));
+
+                if (contact != null)
+                {
+                    user.Contacts.Remove(contact);
+                    user.ContactsOf.Remove(contact);
+                    await unitOfWork.Save();
+                    return Ok($"Contact {contact.ContactProfile.UserName} has been removed from your contacts list");
+                }
+                else
+                {
+                    return NotFound();
+                }
+            }
+            else
+            {
+                return NotFound();
             }
         }
     }

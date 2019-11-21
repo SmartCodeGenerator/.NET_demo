@@ -3,8 +3,10 @@ using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Business;
 using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Infrastructure.Data.AuthorizationRequirements;
 using BlackCaviarBank.Mappings;
 using BlackCaviarBank.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -62,6 +64,13 @@ namespace BlackCaviarBank
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
+
+            services.AddScoped<IAuthorizationHandler, IsBannedHandler>();
+
+            services.AddAuthorization(opts => {
+                opts.AddPolicy("IsBanned",
+                    policy => policy.Requirements.Add(new IsBannedRequirement(false)));
+            });
 
             services.AddSwaggerGen(c =>
             {

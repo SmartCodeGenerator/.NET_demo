@@ -1,4 +1,4 @@
-﻿using BlackCaviarBank.Domain.Core;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -7,18 +7,17 @@ using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
 {
+    [Authorize(Roles="admin")]
     [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
     public class RolesController : ControllerBase
     {
         private readonly RoleManager<IdentityRole> roleManager;
-        private readonly UserManager<UserProfile> userManager;
 
-        public RolesController(RoleManager<IdentityRole> roleManager, UserManager<UserProfile> userManager)
+        public RolesController(RoleManager<IdentityRole> roleManager)
         {
             this.roleManager = roleManager;
-            this.userManager = userManager;
         }
 
         [HttpGet]
