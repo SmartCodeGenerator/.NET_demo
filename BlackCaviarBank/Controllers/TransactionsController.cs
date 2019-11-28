@@ -2,12 +2,12 @@
 using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Infrastructure.Data.DTOs;
 using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -33,13 +33,35 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Transaction>>> GetTransactions()
+        public async Task<ActionResult<PaginatedTransactionsDTO>> GetTransactions(string from, string to, DateTime? date, int page = 1)
         {
             var user = await userManager.GetUserAsync(User);
 
             if(user != null)
             {
-                return unitOfWork.Transactions.GetAllForUser(user).ToList();
+                int pageSize = 5;
+
+                var response = unitOfWork.Transactions.GetAllForUser(user);
+
+                if (!string.IsNullOrEmpty(from))
+                {
+                    response = response.Where(i => i.From.Contains(from));
+                }
+                if (!string.IsNullOrEmpty(to))
+                {
+                    response = response.Where(i => i.To.Contains(to));
+                }
+                if (date.HasValue)
+                {
+                    response = response.Where(i => i.Date.Value.Equals(date));
+                }
+
+                int count = response.Count();
+                var items = response.Skip((page - 1) * pageSize).Take(pageSize);
+
+                PageDTO pageDTO = new PageDTO(count, page, pageSize);
+                var filter = new FilteredTransactionListDTO { Transactions = response.ToList(), Date = date.Value, From = from, To = to };
+                return new PaginatedTransactionsDTO { FilteredTransactionList = filter, Page = pageDTO };
             }
             else
             {
