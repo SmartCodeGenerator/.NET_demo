@@ -30,7 +30,7 @@ namespace BlackCaviarBank.Controllers
             this.operation = operation;
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize]
         [HttpGet]
         public ActionResult<List<Service>> GetAllServices() => unitOfWork.Services.GetAll().ToList();
 
@@ -219,6 +219,34 @@ namespace BlackCaviarBank.Controllers
             else
             {
                 return BadRequest("There is no authenticated user");
+            }
+        }
+
+        [Authorize]
+        [HttpDelete]
+        public async Task<ActionResult> UnsubscribeFromService(string serviceName)
+        {
+            var user = await userManager.GetUserAsync(User);
+
+            var service = unitOfWork.Services.GetByName(serviceName);
+            if(service != null)
+            {
+                var subscription = user.SubscriptionSubscribers.FirstOrDefault(ss => ss.SubscriptionId.Equals(service.ServiceId));
+                if (subscription != null)
+                {
+                    user.SubscriptionSubscribers.Remove(subscription);
+                    service.SubscriptionSubscribers.Remove(subscription);
+                    await unitOfWork.Save();
+                    return Ok($"Subscription on {service} has been cancelled");
+                }
+                else
+                {
+                    return BadRequest($"You did not subscribe on service {serviceName}");
+                }
+            }
+            else
+            {
+                return NotFound();
             }
         }
     }

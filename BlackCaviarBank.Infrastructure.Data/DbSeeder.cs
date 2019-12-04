@@ -19,6 +19,7 @@ namespace BlackCaviarBank.Infrastructure.Data
             }
             if (await userManager.FindByNameAsync("admin1") == null)
             {
+                admin.ProfileImage = System.IO.File.ReadAllBytes("./MyStaticFiles/images/user_icon.svg");
                 var result = await userManager.CreateAsync(admin, "admin11");
                 if (result.Succeeded)
                 {

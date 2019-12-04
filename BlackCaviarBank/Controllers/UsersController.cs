@@ -203,7 +203,7 @@ namespace BlackCaviarBank.Controllers
                 {
                     await userManager.AddToRoleAsync(user, "user");
 
-                    user.ProfileImage = System.IO.File.ReadAllBytes(@"/MyStaticFiles/images/user_icon.svg");
+                    user.ProfileImage = System.IO.File.ReadAllBytes("./MyStaticFiles/images/user_icon.svg");
 
                     unitOfWork.UserProfiles.Update(user);
                     await unitOfWork.Save();
