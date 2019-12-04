@@ -16,6 +16,9 @@ namespace BlackCaviarBank.Infrastructure.Data
         }
 
         public IEnumerable<Service> GetAll() => context.Services;
+
+        public Service GetByName(string name) => context.Services.FirstOrDefault(s => s.Name.Equals(name));
+
         public IEnumerable<Service> GetAllForUser(UserProfile user) => context.Services.Include(s => s.SubscriptionSubscribers).ThenInclude(sc => sc.Subscriber).Where(s => s.SubscriptionSubscribers.Any(sc => sc.SubscriberId.Equals(user.Id)));
 
         public Service Get(int id) => context.Services.Include(s => s.SubscriptionSubscribers).ThenInclude(sc => sc.Subscriber).FirstOrDefault(s => s.ServiceId.Equals(id));
