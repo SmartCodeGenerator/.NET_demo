@@ -86,6 +86,7 @@ namespace BlackCaviarBank
             services.AddSingleton(mapper);
 
             services.AddSignalR();
+            services.AddCors();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -110,13 +111,15 @@ namespace BlackCaviarBank
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Black Caviar V1");
             });
 
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
+            app.UseCors(builder => builder.AllowAnyOrigin());
 
             app.UseAuthentication();
 
             app.UseAuthorization();
+
+            app.UseHttpsRedirection();
+
+            app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
