@@ -19,14 +19,12 @@ namespace BlackCaviarBank.Controllers
     {
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
-        private readonly IMapper mapper;
         private readonly INotifier notifier;
 
-        public NotificationsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, INotifier notifier)
+        public NotificationsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, INotifier notifier)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
-            this.mapper = mapper;
             this.notifier = notifier;
         }
 

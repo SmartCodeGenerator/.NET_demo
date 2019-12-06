@@ -40,7 +40,7 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                return unitOfWork.Cards.GetAllForUser(user).ToList();
+                return Ok(unitOfWork.Cards.GetAllForUser(user).ToList());
             }
             else
             {
