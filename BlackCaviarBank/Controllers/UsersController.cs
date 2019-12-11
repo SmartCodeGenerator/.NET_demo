@@ -7,8 +7,6 @@ using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -32,10 +30,10 @@ namespace BlackCaviarBank.Controllers
             this.mapper = mapper;
         }
 
-        [HttpGet("Check/{id}")]
-        public ActionResult<UserProfile> Check(string id)
+        [HttpGet("CurrentUser")]
+        public async Task<ActionResult<UserProfile>> GetCurrentUser()
         {
-            var result = unitOfWork.UserProfiles.Get(id);
+            var result = await userManager.GetUserAsync(User);
 
             if(result != null)
             {
@@ -43,21 +41,10 @@ namespace BlackCaviarBank.Controllers
             }
             else
             {
-                return NotFound($"there is no user profile with id {id}");
+                return NotFound($"there is no active user");
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST /Login
-        ///     {
-        ///        "userName": "JoJo",
-        ///        "password": "yareyaredaze1",
-        ///        "rememberMe": true
-        ///     }
-        ///
-        /// </remarks>
         [HttpPost("Login")]
         public async Task<ActionResult> Login(LoginUserDTO userData)
         {
@@ -78,48 +65,42 @@ namespace BlackCaviarBank.Controllers
             {
                 if (!User.Identity.IsAuthenticated)
                 {
-                    IAuthenticationOptions options = new JWTAuthenticationOptions
+                    var user = await userManager.FindByNameAsync(userData.UserName);
+                    if (!user.IsBanned.Value)
                     {
-                        Claims = new Claim[]
-                    {
-                        new Claim(ClaimTypes.Name, userData.UserName),
-                        new Claim("password", userData.Password),
-                        new Claim("rememberMe", Convert.ToString(userData.RememberMe))
-                    }
-                    };
-                    IAuthentication authentication = new JWTService(options.SecretKey);
-                    string token = authentication.GenerateToken(options);
-                    if (!authentication.IsTokenValid(token))
-                    {
-                        throw new UnauthorizedAccessException();
-                    }
-                    else
-                    {
-                        List<Claim> claims = authentication.GetTokenClaims(token).ToList();
-
-                        var userName = claims.FirstOrDefault(c => c.Type.Equals(ClaimTypes.Name)).Value;
-                        var password = claims.FirstOrDefault(c => c.Type.Equals("password")).Value;
-                        var isPersistent = claims.FirstOrDefault(c => c.Type.Equals("rememberMe")).Value;
-
-                        var user = await userManager.FindByNameAsync(userName);
-                        if (!user.IsBanned.Value)
+                        var result = await signInManager.PasswordSignInAsync(userData.UserName, userData.Password, userData.RememberMe.HasValue ? userData.RememberMe.Value : false, false);
+                        if (result.Succeeded)
                         {
-                            var result = await signInManager.PasswordSignInAsync(userName, password, Convert.ToBoolean(isPersistent), false);
-                            if (result.Succeeded)
+                            var roles = await userManager.GetRolesAsync(user);
+                            IAuthenticationOptions options = new JWTAuthenticationOptions
                             {
-                                return Ok($"{userName} has been authenticated successfully");
+                                Claims = new Claim[]
+                                {
+                                    new Claim(ClaimTypes.Name, userData.UserName),
+                                    new Claim(ClaimTypes.Role, roles.Contains("admin") ? "admin" : "user")
+                                }
+                            };
+                            IAuthentication authentication = new JWTService(options.SecretKey);
+                            string token = authentication.GenerateToken(options);
+                            if (!authentication.IsTokenValid(token))
+                            {
+                                throw new UnauthorizedAccessException();
                             }
                             else
                             {
-                                ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
-
-                                return Conflict(ModelState);
+                                return Ok(token);
                             }
                         }
                         else
                         {
-                            return BadRequest($"user {userName} is banned");
+                            ModelState.AddModelError("wrong userdata", "Wrong username and(or) password");
+
+                            return Conflict(ModelState);
                         }
+                    }
+                    else
+                    {
+                        return BadRequest($"user {user.UserName} is banned");
                     }
                 }
                 else
@@ -148,20 +129,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST /Register
-        ///     {
-        ///        "userName": "JoJo",
-        ///        "email": "dio@gmail.com",
-        ///        "password": "yareyaredaze1",
-        ///        "passwordConfirm": "yareyaredaze1",
-        ///        "firstName": "Jotaro",
-        ///        "lastName": "Kujo"
-        ///     }
-        ///
-        /// </remarks>
         [HttpPost("Register")]
         public async Task<ActionResult<UserProfile>> Register(RegisterUserDTO userData)
         {
@@ -210,7 +177,7 @@ namespace BlackCaviarBank.Controllers
 
                     await signInManager.SignInAsync(user, false);
 
-                    return CreatedAtAction(nameof(Check), new { id = user.Id }, user);
+                    return CreatedAtAction(nameof(GetCurrentUser), null, user);
                 }
                 else
                 {

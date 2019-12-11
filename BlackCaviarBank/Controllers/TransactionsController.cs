@@ -33,7 +33,7 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<PaginatedTransactionsDTO>> GetTransactions(string from, string to, DateTime? date, int page = 1)
+        public async Task<ActionResult<PaginatedTransactionsDTO>> GetTransactions(string from, string to, int page = 1)
         {
             var user = await userManager.GetUserAsync(User);
 
@@ -51,17 +51,13 @@ namespace BlackCaviarBank.Controllers
                 {
                     response = response.Where(i => i.To.Contains(to));
                 }
-                if (date.HasValue)
-                {
-                    response = response.Where(i => i.Date.Value.Equals(date));
-                }
 
                 int count = response.Count();
                 var items = response.Skip((page - 1) * pageSize).Take(pageSize);
 
                 PageDTO pageDTO = new PageDTO(count, page, pageSize);
-                var filter = new FilteredTransactionListDTO { Transactions = response.ToList(), Date = date.Value, From = from, To = to };
-                return new PaginatedTransactionsDTO { FilteredTransactionList = filter, Page = pageDTO };
+                var filter = new FilteredTransactionListDTO { Transactions = response.ToList(), From = from, To = to };
+                return Ok(new PaginatedTransactionsDTO { FilteredTransactionList = filter, Page = pageDTO });
             }
             else
             {
