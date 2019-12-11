@@ -1,5 +1,4 @@
 ﻿using BlackCaviarBank.Domain.Core;
-using System;
 using System.Collections.Generic;
 
 namespace BlackCaviarBank.Infrastructure.Data.DTOs
@@ -9,6 +8,5 @@ namespace BlackCaviarBank.Infrastructure.Data.DTOs
         public IEnumerable<Transaction> Transactions { get; set; }
         public string From { get; set; }
         public string To { get; set; }
-        public DateTime Date { get; set; }
     }
 }

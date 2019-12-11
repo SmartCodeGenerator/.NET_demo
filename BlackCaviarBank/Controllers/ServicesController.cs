@@ -6,6 +6,7 @@ using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,9 +33,9 @@ namespace BlackCaviarBank.Controllers
 
         [Authorize]
         [HttpGet]
-        public ActionResult<List<Service>> GetAllServices() => unitOfWork.Services.GetAll().ToList();
+        public ActionResult<List<Service>> GetAllServices() => Ok(unitOfWork.Services.GetAll().ToList());
 
-        [Authorize(Roles = "admin")]
+        [Authorize]
         [HttpGet("{id}")]
         public ActionResult<Service> GetService(int id)
         {
@@ -66,105 +67,93 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST /RegisterService
-        ///     {
-        ///        "name": "JotaroKujoDreams",
-        ///        "price": 100000
-        ///     }
-        ///
-        /// </remarks>
-        [Authorize(Roles = "admin")]
         [HttpPost("RegisterService")]
         public async Task<ActionResult<Service>> CreateService(ServiceDTO data)
         {
-            if (string.IsNullOrEmpty(data.Name))
+            if (User.IsInRole("admin"))
             {
-                ModelState.AddModelError("name", "Service name must not be empty");
-            }
+                if (string.IsNullOrEmpty(data.Name))
+                {
+                    ModelState.AddModelError("name", "Service name must not be empty");
+                }
 
-            if (ModelState.IsValid)
-            {
-                var service = mapper.Map<Service>(data);
+                if (ModelState.IsValid)
+                {
+                    var service = mapper.Map<Service>(data);
 
-                unitOfWork.Services.Create(service);
+                    unitOfWork.Services.Create(service);
 
-                await unitOfWork.Save();
+                    await unitOfWork.Save();
 
-                return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
+                    return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
+                }
+                else
+                {
+                    return Conflict(ModelState);
+                }
             }
             else
             {
-                return Conflict(ModelState);
+                throw new UnauthorizedAccessException("You must be admin");
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     PUT /UpdateService
-        ///     {
-        ///        "name": "JotaroKujoDreams",
-        ///        "price": 100000
-        ///     }
-        ///
-        /// </remarks>
-        [Authorize(Roles = "admin")]
         [HttpPut("{id}")]
         public async Task<ActionResult<Service>> UpdateService(ServiceDTO data, int id)
         {
-            if (string.IsNullOrEmpty(data.Name))
+            if (User.IsInRole("admin"))
             {
-                ModelState.AddModelError("name", "Service name must not be empty");
-            }
-            if (data.Price < 0)
-            {
-                ModelState.AddModelError("price", "Service price must not be less than 0");
-            }
+                if (string.IsNullOrEmpty(data.Name))
+                {
+                    ModelState.AddModelError("name", "Service name must not be empty");
+                }
+                if (data.Price < 0)
+                {
+                    ModelState.AddModelError("price", "Service price must not be less than 0");
+                }
 
-            if (ModelState.IsValid)
-            {
-                var service = unitOfWork.Services.Get(id);
-                service.Name = data.Name.Equals("string") ? service.Name : data.Name;
-                service.Price = data.Price.Equals(0) ? service.Price : data.Price;
+                if (ModelState.IsValid)
+                {
+                    var service = unitOfWork.Services.Get(id);
+                    service.Name = data.Name.Equals("string") ? service.Name : data.Name;
+                    service.Price = data.Price.Equals(0) ? service.Price : data.Price;
 
-                unitOfWork.Services.Update(service);
-                await unitOfWork.Save();
+                    unitOfWork.Services.Update(service);
+                    await unitOfWork.Save();
 
-                return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
+                    return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
+                }
+                else
+                {
+                    return Conflict(ModelState);
+                }
             }
             else
             {
-                return Conflict(ModelState);
+                throw new UnauthorizedAccessException("You must be admin");
             }
         }
 
-        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> RemoveService(int id)
         {
-            var target = unitOfWork.Services.Get(id);
-            string name = target.Name;
+            if (User.IsInRole("admin"))
+            {
+                var target = unitOfWork.Services.Get(id);
+                string name = target.Name;
 
-            unitOfWork.Services.Delete(id);
+                unitOfWork.Services.Delete(id);
 
-            await unitOfWork.Save();
+                await unitOfWork.Save();
 
-            return Ok($"Service with name ${name} has been removed");
+                return Ok($"Service with name ${name} has been removed");
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("You must be admin");
+            }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST /SubscribeOnService
-        ///     {
-        ///        "cardNumber": "1111222233334444",
-        ///        "serviceId": 1
-        ///     }
-        ///
-        /// </remarks>
         [Authorize]
         [HttpPost("SubscribeOnService")]
         public async Task<ActionResult> SubcribeOnService(SubscriptionDTO data)
@@ -223,7 +212,7 @@ namespace BlackCaviarBank.Controllers
         }
 
         [Authorize]
-        [HttpDelete]
+        [HttpDelete("UnsubscribeFromService")]
         public async Task<ActionResult> UnsubscribeFromService(string serviceName)
         {
             var user = await userManager.GetUserAsync(User);

@@ -39,7 +39,7 @@ namespace BlackCaviarBank.Controllers
 
             if (user != null)
             {
-                return unitOfWork.Accounts.GetAllForUser(user).ToList();
+                return Ok(unitOfWork.Accounts.GetAllForUser(user).ToList());
             }
             else
             {
@@ -71,17 +71,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST /CreateAccount
-        ///     {
-        ///        "name": "JotaroKujoDreams",
-        ///        "balance": 100000,
-        ///        "interestRate": 0.05
-        ///     }
-        ///
-        /// </remarks>
         [HttpPost("CreateAccount")]
         public async Task<ActionResult<Account>> CreateAccount(AccountDTO data)
         {
@@ -128,17 +117,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     PUT /UpdateAccount
-        ///     {
-        ///        "name": "JotaroKujoDreams",
-        ///        "balance": 100000,
-        ///        "interestRate": 0.05
-        ///     }
-        ///
-        /// </remarks>
         [HttpPut("{id}")]
         public async Task<ActionResult<Account>> UpdateAccount(AccountDTO data, int id)
         {

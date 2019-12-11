@@ -72,15 +72,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     POST /BookCard
-        ///     {
-        ///        "balance": 100000
-        ///     }
-        ///
-        /// </remarks>
         [HttpPost("BookCard")]
         public async Task<ActionResult<Card>> BookCard(CardDTO data)
         {
@@ -134,15 +125,6 @@ namespace BlackCaviarBank.Controllers
             }
         }
 
-        /// <remarks>
-        /// Sample request:
-        ///
-        ///     PUT /UpdateCard
-        ///     {
-        ///        "balance": 100000
-        ///     }
-        ///
-        /// </remarks>
         [HttpPut("{id}")]
         public async Task<ActionResult<Card>> UpdateCard(CardDTO data, int id)
         {
