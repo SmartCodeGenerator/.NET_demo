@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BlackCaviarBank.Domain.Core
 {
@@ -17,6 +18,7 @@ namespace BlackCaviarBank.Domain.Core
         public List<Notification> Notifications { get; set; } = new List<Notification>();
         public List<SubscriptionSubscriber> SubscriptionSubscribers { get; set; } = new List<SubscriptionSubscriber>();
 
-        public List<ContactRelationship> Contacts { get; set; } = new List<ContactRelationship>();
+        public List<ContactRelationship> Contacts1 { get; set; } = new List<ContactRelationship>();
+        public List<ContactRelationship> Contacts2 { get; set; } = new List<ContactRelationship>();
     }
 }

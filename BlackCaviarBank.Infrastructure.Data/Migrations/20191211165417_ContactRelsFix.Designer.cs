@@ -4,14 +4,16 @@ using BlackCaviarBank.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BlackCaviarBank.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20191211165417_ContactRelsFix")]
+    partial class ContactRelsFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,7 +55,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 678, DateTimeKind.Local).AddTicks(6758));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 18, 54, 17, 615, DateTimeKind.Local).AddTicks(6117));
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
@@ -94,7 +96,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 685, DateTimeKind.Local).AddTicks(1708));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 18, 54, 17, 621, DateTimeKind.Local).AddTicks(9458));
 
                     b.Property<bool>("IsBlocked")
                         .ValueGeneratedOnAdd()
@@ -138,13 +140,16 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                     b.Property<string>("SenderId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("UserProfileId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("ContactRelationshipId");
+
+                    b.HasIndex("ReceiverId");
 
                     b.HasIndex("SenderId");
 
-                    b.HasIndex("ReceiverId", "SenderId")
-                        .IsUnique()
-                        .HasFilter("[ReceiverId] IS NOT NULL AND [SenderId] IS NOT NULL");
+                    b.HasIndex("UserProfileId");
 
                     b.ToTable("ContactRelationship");
                 });
@@ -171,7 +176,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 685, DateTimeKind.Local).AddTicks(8096));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 18, 54, 17, 622, DateTimeKind.Local).AddTicks(5591));
 
                     b.HasKey("NotificationId");
 
@@ -238,7 +243,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 687, DateTimeKind.Local).AddTicks(3899));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 18, 54, 17, 624, DateTimeKind.Local).AddTicks(1142));
 
                     b.Property<string>("From")
                         .IsRequired()
@@ -499,6 +504,10 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                     b.HasOne("BlackCaviarBank.Domain.Core.UserProfile", "User1")
                         .WithMany("Contacts1")
                         .HasForeignKey("SenderId");
+
+                    b.HasOne("BlackCaviarBank.Domain.Core.UserProfile", null)
+                        .WithMany("Contacts")
+                        .HasForeignKey("UserProfileId");
                 });
 
             modelBuilder.Entity("BlackCaviarBank.Domain.Core.Notification", b =>

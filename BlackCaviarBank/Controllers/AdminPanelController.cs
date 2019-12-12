@@ -1,11 +1,13 @@
 ﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
+using BlackCaviarBank.Infrastructure.Business;
 using BlackCaviarBank.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -25,9 +27,13 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet("GetUsers")]
-        public async Task<ActionResult<List<UserProfile>>> GetUsers()
+        public async Task<ActionResult<List<UserProfile>>> GetUsers(string token)
         {
-            if (User.IsInRole("admin"))
+            var auth = new JWTService(new JWTAuthenticationOptions().SecretKey);
+            var claims = auth.GetTokenClaims(token);
+            var role = claims.FirstOrDefault(cl => cl.Type.Equals(ClaimTypes.Role)).Value;
+
+            if (role.Equals("admin"))
             {
                 var users = await userManager.GetUsersInRoleAsync("user");
 

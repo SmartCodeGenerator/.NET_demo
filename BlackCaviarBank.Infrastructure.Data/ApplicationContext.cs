@@ -63,9 +63,10 @@ namespace BlackCaviarBank.Infrastructure.Data
             builder.Entity<UserProfile>().Property(up => up.IsBanned).HasDefaultValue(false).IsRequired(false);
             builder.Entity<UserProfile>().Property(up => up.ProfileImage).IsRequired(false);
 
+            builder.Entity<ContactRelationship>().HasIndex(cr => new { cr.ReceiverId, cr.SenderId }).IsUnique();
             builder.Entity<ContactRelationship>().Property(cr => cr.IsApproved).HasDefaultValue(false);
-            builder.Entity<ContactRelationship>().HasOne(cr => cr.User1).WithMany(up => up.Contacts).HasForeignKey(cr => cr.ReceiverId);
-            builder.Entity<ContactRelationship>().HasOne(cr => cr.User2).WithMany(/*up => up.Contacts*/).HasForeignKey(cr => cr.SenderId);
+            builder.Entity<ContactRelationship>().HasOne(cr => cr.User1).WithMany(up => up.Contacts1).HasForeignKey(cr => cr.SenderId);
+            builder.Entity<ContactRelationship>().HasOne(cr => cr.User2).WithMany(up => up.Contacts2).HasForeignKey(cr => cr.ReceiverId);
         }
     }
 }

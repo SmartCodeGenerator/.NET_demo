@@ -379,39 +379,55 @@ namespace BlackCaviarBank.Controllers
         public async Task<ActionResult<List<UserProfile>>> GetContacts()
         {
             var user = await userManager.GetUserAsync(User);
+            var src = unitOfWork.UserProfiles.GetWithContactsLoaded(user);
 
-            var res = user.Contacts.Where(c => c.SenderId.Equals(user.Id) && c.IsApproved.Equals(true));
+            var res = src.Contacts1.Where(c => c.IsApproved.Equals(true)).Concat(src.Contacts2.Where(c => c.IsApproved.Equals(true))).Distinct();
             var contacts = new List<UserProfile>();
             foreach(var doc in res)
             {
-                contacts.Add(unitOfWork.UserProfiles.Get(doc.ReceiverId));
+                contacts.Add(unitOfWork.UserProfiles.Get(doc.ReceiverId.Equals(user.Id) ? doc.SenderId : doc.ReceiverId));
             }
             return Ok(contacts);
         }
 
         [HttpGet("Contacts/{id}")]
-        public async Task<ActionResult<UserProfile>> GetContact(int id)
+        public async Task<ActionResult<UserProfile>> GetContact(string id)
         {
             var user = await userManager.GetUserAsync(User);
+            var src = unitOfWork.UserProfiles.GetWithContactsLoaded(user);
 
-            var res = user.Contacts.FirstOrDefault(c => c.SenderId.Equals(user.Id) && c.ContactRelationshipId.Equals(id));
-            return Ok(unitOfWork.UserProfiles.Get(res.ReceiverId));
+            var res = src.Contacts1.Where(c => c.IsApproved.Equals(true)).Concat(src.Contacts2.Where(c => c.IsApproved.Equals(true))).Distinct();
+            var contacts = new List<UserProfile>();
+            foreach (var doc in res)
+            {
+                contacts.Add(unitOfWork.UserProfiles.Get(doc.ReceiverId.Equals(user.Id) ? doc.SenderId : doc.ReceiverId));
+            }
+            if (contacts.Contains(unitOfWork.UserProfiles.Get(id)))
+            {
+                return unitOfWork.UserProfiles.Get(id);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         [HttpGet("ContactRequests")]
         public async Task<ActionResult<List<ContactRelationship>>> GetContactRequests()
         {
             var user = await userManager.GetUserAsync(User);
+            var src = unitOfWork.UserProfiles.GetWithContactsLoaded(user);
 
-            return Ok(user.Contacts.Where(c => c.IsApproved.Equals(false) && c.ReceiverId.Equals(user.Id)).ToList());
+            return Ok(src.Contacts2.Where(c => c.IsApproved.Equals(false) && c.SenderId != null && c.ReceiverId != null).ToList());
         }
 
         [HttpGet("ContactRequests/{id}")]
         public async Task<ActionResult<ContactRelationship>> GetContactRequest(int id)
         {
             var user = await userManager.GetUserAsync(User);
+            var src = unitOfWork.UserProfiles.GetWithContactsLoaded(user);
 
-            var res = user.Contacts.FirstOrDefault(c => c.IsApproved.Equals(false) && c.ReceiverId.Equals(user.Id) && c.ContactRelationshipId.Equals(id));
+            var res = src.Contacts2.FirstOrDefault(c => c.IsApproved.Equals(false) && c.SenderId != null && c.ReceiverId != null && c.ContactRelationshipId.Equals(id));
             if (res != null)
             {
                 return Ok(res);
@@ -426,11 +442,13 @@ namespace BlackCaviarBank.Controllers
         public async Task<ActionResult<ContactRelationship>> ApproveContactRequest(int id)
         {
             var user = await userManager.GetUserAsync(User);
+            var src = unitOfWork.UserProfiles.GetWithContactsLoaded(user);
 
-            var req = user.Contacts.FirstOrDefault(c => c.ContactRelationshipId.Equals(id) && c.ReceiverId.Equals(user.Id));
+            var req = src.Contacts2.FirstOrDefault(c => c.ContactRelationshipId.Equals(id) && c.IsApproved.Equals(false));
             if (req != null)
             {
                 req.IsApproved = true;
+                user.Contacts1.Add(req);
                 unitOfWork.UserProfiles.Update(user);
                 await unitOfWork.Save();
                 return Ok(req);
@@ -450,8 +468,8 @@ namespace BlackCaviarBank.Controllers
             if (receiver != null)
             {
                 var rel = new ContactRelationship { User1 = user, User2 = receiver };
-                user.Contacts.Add(rel);
-                receiver.Contacts.Add(rel);
+                user.Contacts1.Add(rel);
+                receiver.Contacts2.Add(rel);
                 await unitOfWork.Save();
                 return Ok(rel);
             }
@@ -465,12 +483,13 @@ namespace BlackCaviarBank.Controllers
         public async Task<ActionResult> DeleteContact(int id)
         {
             var user = await userManager.GetUserAsync(User);
+            var src = unitOfWork.UserProfiles.GetWithContactsLoaded(user);
 
-            var req = user.Contacts.FirstOrDefault(c => c.SenderId.Equals(user.Id) && c.ContactRelationshipId.Equals(id));
+            var req = src.Contacts1.FirstOrDefault(c => c.ContactRelationshipId.Equals(id));
             if (req != null)
             {
                 req.IsApproved = false;
-                user.Contacts.Remove(req);
+                user.Contacts1.Remove(req);
                 unitOfWork.UserProfiles.Update(user);
                 await unitOfWork.Save();
                 return Ok();
