@@ -21,6 +21,8 @@ namespace BlackCaviarBank.Infrastructure.Data
 
         public UserProfile GetByUserName(string userName) => context.Users.FirstOrDefault(up => up.UserName.Equals(userName));
 
+        public UserProfile GetWithContactsLoaded(UserProfile userProfile) => context.Users.Include(u => u.Contacts1).Include(u => u.Contacts2).FirstOrDefault(u => u.Id.Equals(userProfile.Id));
+
         public void Create(UserProfile userProfile) => context.Users.Add(userProfile);
 
         public void Update(UserProfile userProfile) => context.Users.Update(userProfile);

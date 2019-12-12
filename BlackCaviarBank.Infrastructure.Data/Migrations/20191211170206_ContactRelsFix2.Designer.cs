@@ -4,14 +4,16 @@ using BlackCaviarBank.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace BlackCaviarBank.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20191211170206_ContactRelsFix2")]
+    partial class ContactRelsFix2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,7 +55,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 678, DateTimeKind.Local).AddTicks(6758));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 2, 5, 803, DateTimeKind.Local).AddTicks(1113));
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("nvarchar(450)");
@@ -94,7 +96,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 685, DateTimeKind.Local).AddTicks(1708));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 2, 5, 809, DateTimeKind.Local).AddTicks(5772));
 
                     b.Property<bool>("IsBlocked")
                         .ValueGeneratedOnAdd()
@@ -140,11 +142,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
 
                     b.HasKey("ContactRelationshipId");
 
-                    b.HasIndex("SenderId");
+                    b.HasIndex("ReceiverId");
 
-                    b.HasIndex("ReceiverId", "SenderId")
-                        .IsUnique()
-                        .HasFilter("[ReceiverId] IS NOT NULL AND [SenderId] IS NOT NULL");
+                    b.HasIndex("SenderId");
 
                     b.ToTable("ContactRelationship");
                 });
@@ -171,7 +171,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 685, DateTimeKind.Local).AddTicks(8096));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 2, 5, 810, DateTimeKind.Local).AddTicks(2186));
 
                     b.HasKey("NotificationId");
 
@@ -238,7 +238,7 @@ namespace BlackCaviarBank.Infrastructure.Data.Migrations
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
-                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 47, 49, 687, DateTimeKind.Local).AddTicks(3899));
+                        .HasDefaultValue(new DateTime(2019, 12, 11, 19, 2, 5, 811, DateTimeKind.Local).AddTicks(7808));
 
                     b.Property<string>("From")
                         .IsRequired()
