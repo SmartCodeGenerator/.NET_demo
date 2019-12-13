@@ -44,7 +44,7 @@ namespace BlackCaviarBank.Controllers
             }
             else
             {
-                return BadRequest("There is no authenticated user");
+                return Ok(unitOfWork.Cards.GetAll().ToList());
             }
         }
 
@@ -68,7 +68,16 @@ namespace BlackCaviarBank.Controllers
             }
             else
             {
-                return BadRequest("There is no authenticated user");
+                //return BadRequest("There is no authenticated user");
+                var res = unitOfWork.Cards.Get(id);
+                if (res != null)
+                {
+                    return Ok(res);
+                }
+                else
+                {
+                    return NotFound();
+                }
             }
         }
 
@@ -121,7 +130,47 @@ namespace BlackCaviarBank.Controllers
             }
             else
             {
-                return BadRequest("There is no authenticated user");
+                //return BadRequest("There is no authenticated user");
+                if (data.Balance < 0)
+                {
+                    ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    var card = mapper.Map<Card>(data);
+
+                    card.CardNumber = generator.GetGeneratedCardNumber(unitOfWork.Cards.GetAll().ToList());
+
+                    var expDate = DateTime.Now;
+                    expDate = expDate.AddYears(5);
+                    card.ExpirationDate = expDate;
+
+                    var rand = new Random();
+                    int res = rand.Next(0, 2);
+                    card.PaymentSystem = res.Equals(0) ? "Visa" : "Mastercard";
+
+                    var cvv2Builder = new StringBuilder();
+                    for (int i = 0; i < 3; i++)
+                    {
+                        cvv2Builder.Append(rand.Next(10));
+                    }
+                    card.CVV2 = cvv2Builder.ToString();
+
+                    var owner = unitOfWork.UserProfiles.GetAll().Last();
+                    card.Owner = owner;
+                    owner.Cards.Add(card);
+
+                    unitOfWork.Cards.Create(card);
+
+                    await unitOfWork.Save();
+
+                    return CreatedAtAction(nameof(GetCard), new { id = card.CardId }, card);
+                }
+                else
+                {
+                    return Conflict(ModelState);
+                }
             }
         }
 
@@ -156,7 +205,28 @@ namespace BlackCaviarBank.Controllers
             }
             else
             {
-                return BadRequest("There is no authenticated user");
+                //return BadRequest("There is no authenticated user");
+                if (data.Balance < 0)
+                {
+                    ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    var target = unitOfWork.Cards.Get(id);
+
+                    target.Balance = data.Balance.Equals(0) ? target.Balance : data.Balance;
+
+                    unitOfWork.Cards.Update(target);
+
+                    await unitOfWork.Save();
+
+                    return CreatedAtAction(nameof(GetCard), new { id = target.CardId }, target);
+                }
+                else
+                {
+                    return Conflict(ModelState);
+                }
             }
         }
 
@@ -178,7 +248,15 @@ namespace BlackCaviarBank.Controllers
             }
             else
             {
-                return BadRequest("There is no authenticated user");
+                //return BadRequest("There is no authenticated user");
+                var target = unitOfWork.Cards.Get(id);
+                var num = target.CardNumber;
+
+                unitOfWork.Cards.Delete(id);
+
+                await unitOfWork.Save();
+
+                return Ok($"Card with number {num} has been deleted");
             }
         }
     }

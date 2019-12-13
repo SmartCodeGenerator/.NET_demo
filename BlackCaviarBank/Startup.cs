@@ -6,6 +6,7 @@ using BlackCaviarBank.Infrastructure.Data;
 using BlackCaviarBank.Infrastructure.Data.AuthorizationRequirements;
 using BlackCaviarBank.Mappings;
 using BlackCaviarBank.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -67,6 +68,12 @@ namespace BlackCaviarBank
 
             services.AddScoped<IAuthorizationHandler, IsBannedHandler>();
 
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options => 
+                {
+                    options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/api/Users/Login");
+                });
+
             services.AddAuthorization(opts => {
                 opts.AddPolicy("IsBanned",
                     policy => policy.Requirements.Add(new IsBannedRequirement(false)));
@@ -111,7 +118,12 @@ namespace BlackCaviarBank
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Black Caviar V1");
             });
 
-            app.UseCors(builder => builder.AllowAnyOrigin());
+            app.UseCors(builder =>
+            {
+                builder.AllowAnyOrigin();
+                builder.AllowAnyHeader();
+                builder.AllowAnyMethod();
+            });
 
             app.UseAuthentication();
 
