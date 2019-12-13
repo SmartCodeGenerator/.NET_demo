@@ -56,10 +56,6 @@ namespace BlackCaviarBank.Controllers
             {
                 ModelState.AddModelError("password", "Password must not be empty");
             }
-            if (!userData.RememberMe.HasValue)
-            {
-                ModelState.AddModelError("rememberMe", "RememberMe must not be empty");
-            }
 
             if (ModelState.IsValid)
             {
@@ -68,7 +64,7 @@ namespace BlackCaviarBank.Controllers
                     var user = await userManager.FindByNameAsync(userData.UserName);
                     if (!user.IsBanned.Value)
                     {
-                        var result = await signInManager.PasswordSignInAsync(userData.UserName, userData.Password, userData.RememberMe.HasValue ? userData.RememberMe.Value : false, false);
+                        var result = await signInManager.PasswordSignInAsync(userData.UserName, userData.Password, false, false);
                         if (result.Succeeded)
                         {
                             var roles = await userManager.GetRolesAsync(user);
@@ -121,7 +117,7 @@ namespace BlackCaviarBank.Controllers
             {
                 var currentUser = await userManager.GetUserAsync(User);
                 await signInManager.SignOutAsync();
-                return Content($"{currentUser.UserName} has been signed out");
+                return Ok($"{currentUser.UserName} has been signed out");
             }
             else
             {
