@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace BlackCaviarBank.Domain.Core
 {
@@ -11,14 +10,11 @@ namespace BlackCaviarBank.Domain.Core
         public bool? IsBanned { get; set; }
         public byte[] ProfileImage { get; set; }
 
-        public List<Card> Cards { get; set; } = new List<Card>();
-        public List<Account> Accounts { get; set; } = new List<Account>();
-        public List<Transaction> Transactions { get; set; } = new List<Transaction>();
+        public ICollection<Card> Cards { get; set; } = new List<Card>();
+        public ICollection<Account> Accounts { get; set; } = new List<Account>();
+        public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
-        public List<Notification> Notifications { get; set; } = new List<Notification>();
-        public List<SubscriptionSubscriber> SubscriptionSubscribers { get; set; } = new List<SubscriptionSubscriber>();
-
-        public List<ContactRelationship> Contacts1 { get; set; } = new List<ContactRelationship>();
-        public List<ContactRelationship> Contacts2 { get; set; } = new List<ContactRelationship>();
+        public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+        public ICollection<SubscriptionSubscriber> SubscriptionSubscribers { get; set; } = new List<SubscriptionSubscriber>();
     }
 }

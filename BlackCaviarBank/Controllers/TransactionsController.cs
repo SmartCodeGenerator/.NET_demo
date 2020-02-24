@@ -22,9 +22,9 @@ namespace BlackCaviarBank.Controllers
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
         private readonly IMapper mapper;
-        private readonly IOperation operation;
+        private readonly IOperationService operation;
 
-        public TransactionsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IOperation operation)
+        public TransactionsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IOperationService operation)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;

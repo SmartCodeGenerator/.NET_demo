@@ -1,110 +1,75 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using BlackCaviarBank.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
 {
+    [Authorize(Roles = "admin")]
     [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
     public class RolesController : ControllerBase
     {
         private readonly RoleManager<IdentityRole> roleManager;
+        private readonly IRolesManagementService rolesManagementService;
 
-        public RolesController(RoleManager<IdentityRole> roleManager)
+        public RolesController(RoleManager<IdentityRole> roleManager, IRolesManagementService rolesManagementService)
         {
             this.roleManager = roleManager;
+            this.rolesManagementService = rolesManagementService;
         }
 
         [HttpGet]
-        public ActionResult<List<IdentityRole>> GetAllRoles() 
+        public IActionResult GetAllRoles() 
         {
-            if (User.IsInRole("admin"))
-            {
-                return Ok(roleManager.Roles.ToList());
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return Ok(roleManager.Roles.ToList());
         }
 
         [HttpPost("CreateRole")]
-        public async Task<ActionResult> CreateRole(string name)
+        public async Task<IActionResult> CreateRole(string name)
         {
-            if (User.IsInRole("admin"))
+            if (string.IsNullOrEmpty(name))
             {
-                if (string.IsNullOrEmpty(name))
-                {
-                    ModelState.AddModelError("roleName", "Role name must not be empty");
-                }
+                ModelState.AddModelError("roleName", "NotNull");
+            }
 
-                if (ModelState.IsValid)
-                {
-                    var result = await roleManager.CreateAsync(new IdentityRole(name));
+            var errors = await rolesManagementService.CreateRole(name, roleManager);
 
-                    if (result.Succeeded)
-                    {
-                        return RedirectToAction("GetAllRoles");
-                    }
-                    else
-                    {
-                        foreach (var error in result.Errors)
-                        {
-                            ModelState.AddModelError(error.Code, error.Description);
-                        }
-                        return Conflict(ModelState);
-                    }
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+            if (errors == null)
+            {
+                return RedirectToAction(nameof(GetAllRoles));
             }
             else
             {
-                throw new UnauthorizedAccessException("You must be admin");
+                foreach(var error in errors)
+                {
+                    ModelState.AddModelError(error.Code, error.Description);
+                }
             }
+            return Conflict(ModelState);
         }
 
         [HttpDelete("{roleId}")]
         public async Task<ActionResult> DeleteRole(string roleId)
         {
-            if (User.IsInRole("admin"))
+            var errors = await rolesManagementService.DeleteRole(roleId, roleManager);
+
+            if (errors == null)
             {
-                var role = await roleManager.FindByIdAsync(roleId);
-
-                if (role != null)
-                {
-                    string name = role.Name;
-
-                    var result = await roleManager.DeleteAsync(role);
-
-                    if (result.Succeeded)
-                    {
-                        return Ok($"Role with name {name} has been deleted");
-                    }
-                    else
-                    {
-                        foreach (var error in result.Errors)
-                        {
-                            ModelState.AddModelError(error.Code, error.Description);
-                        }
-                        return Conflict(ModelState);
-                    }
-                }
-                else
-                {
-                    return NotFound($"There is no role with id {roleId}");
-                }
+                return NoContent();
             }
             else
             {
-                throw new UnauthorizedAccessException("You must be admin");
+                foreach (var error in errors)
+                {
+                    ModelState.AddModelError(error.Code, error.Description);
+                }
             }
+            return Conflict(ModelState);
         }
     }
 }

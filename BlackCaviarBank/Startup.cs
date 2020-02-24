@@ -2,12 +2,14 @@ using AutoMapper;
 using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Infrastructure.Business;
+using BlackCaviarBank.Infrastructure.Business.Resources.Mappings;
+using BlackCaviarBank.Infrastructure.Business.Resources.ServiceOptions;
 using BlackCaviarBank.Infrastructure.Data;
-using BlackCaviarBank.Infrastructure.Data.AuthorizationRequirements;
-using BlackCaviarBank.Mappings;
+using BlackCaviarBank.Infrastructure.Data.Repositories;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -17,6 +19,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using System.IO;
@@ -35,18 +38,25 @@ namespace BlackCaviarBank
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<IRepository<Account, int>, AccountRepository>();
-            services.AddScoped<IRepository<Card, int>, CardRepository>();
-            services.AddScoped<IRepository<Notification, int>, NotificationRepository>();
-            services.AddScoped<IRepository<Service, int>, ServiceRepository>();
-            services.AddScoped<IRepository<Transaction, int>, TransactionRepository>();
-            services.AddScoped<IRepository<UserProfile, string>, UserProfileRepository>();
+            services.AddScoped<IRepository<Account>, BaseRepository<Account>>();
+            services.AddScoped<IRepository<Card>, BaseRepository<Card>>();
+            services.AddScoped<IRepository<Notification>, BaseRepository<Notification>>();
+            services.AddScoped<IRepository<Service>, BaseRepository<Service>>();
+            services.AddScoped<IRepository<Transaction>, BaseRepository<Transaction>>();
+            services.AddScoped<IRepository<UserProfile>, BaseRepository<UserProfile>>();
+
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IGenerator, NumberGenerator>();
-            services.AddScoped<IOperation, FinancialOperation>();
-            services.AddScoped<INotifier, ServiceNotifier>();
-            services.AddScoped<IAuthenticationOptions, JWTAuthenticationOptions>();
-            services.AddScoped<IAuthentication, JWTService>();
+
+            services.AddScoped<IGeneratorService, NumberGeneratorService>();
+            services.AddScoped<IOperationService, FinancialOperationService>();
+            services.AddScoped<INotificationService, BankingNotificationService>();
+            services.AddScoped<IRegistrationService, RegistrationService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IAdministrationService, AdministrationService>();
+            services.AddScoped<IFinanceAgentService, FinanceAgentService>();
+            services.AddScoped<IServiceHandlingService, ServiceHandlingService>();
+            services.AddScoped<IRolesManagementService, RolesManagementService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             services.AddDbContext<ApplicationContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
@@ -62,26 +72,56 @@ namespace BlackCaviarBank
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(options =>
+                    {
+                        options.RequireHttpsMetadata = true;
+                        options.TokenValidationParameters = new TokenValidationParameters()
+                        {
+                            ValidateIssuer = true,
+                            ValidIssuer = AuthOptions.ISSUER,
+
+                            ValidateAudience = true,
+                            ValidAudience = AuthOptions.AUDIENCE,
+
+                            ValidateLifetime = true,
+
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey()
+                        };
+                    }
+                );
+
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
                 .AddNewtonsoftJson(opt => opt.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
 
-            services.AddScoped<IAuthorizationHandler, IsBannedHandler>();
-
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options => 
-                {
-                    options.LoginPath = new Microsoft.AspNetCore.Http.PathString("/api/Users/Login");
-                });
-
-            services.AddAuthorization(opts => {
-                opts.AddPolicy("IsBanned",
-                    policy => policy.Requirements.Add(new IsBannedRequirement(false)));
-            });
-
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Black Caviar", Version = "v1" });
+                c.SwaggerDoc("v2", new OpenApiInfo { Title = "BlackCaviarBank API", Version = "v2" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please insert JWT with Bearer into field",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
             });
 
             var mappingConfig = new MapperConfiguration(mc =>
@@ -92,7 +132,6 @@ namespace BlackCaviarBank
             IMapper mapper = mappingConfig.CreateMapper();
             services.AddSingleton(mapper);
 
-            services.AddSignalR();
             services.AddCors();
         }
 
@@ -125,18 +164,16 @@ namespace BlackCaviarBank
                 builder.AllowAnyMethod();
             });
 
-            app.UseAuthentication();
-
-            app.UseAuthorization();
-
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-                endpoints.MapHub<ChatHub>("/chat");
             });
         }
     }

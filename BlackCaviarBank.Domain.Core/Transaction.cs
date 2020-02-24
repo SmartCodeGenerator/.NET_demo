@@ -4,7 +4,7 @@ namespace BlackCaviarBank.Domain.Core
 {
     public class Transaction
     {
-        public int TransactionId { get; set; }
+        public Guid TransactionId { get; set; }
         public string From { get; set; }
         public string To { get; set; }
         public double Amount { get; set; }

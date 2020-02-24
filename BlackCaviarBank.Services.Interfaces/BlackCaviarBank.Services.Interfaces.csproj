@@ -8,6 +8,7 @@
     <PackageReference Include="AutoMapper" Version="9.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="7.0.0" />
     <PackageReference Include="MailKit" Version="2.4.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.0.0" />
     <PackageReference Include="Microsoft.OpenApi" Version="1.1.4" />
@@ -15,7 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlackCaviarBank.Domain.Core\BlackCaviarBank.Domain.Core.csproj" />
-    <ProjectReference Include="..\BlackCaviarBank.Infrastructure.Data\BlackCaviarBank.Infrastructure.Data.csproj" />
   </ItemGroup>
 
 </Project>

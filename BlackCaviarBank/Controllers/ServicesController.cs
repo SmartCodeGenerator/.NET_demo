@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
 using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Domain.Interfaces;
-using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
+using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,222 +21,117 @@ namespace BlackCaviarBank.Controllers
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
         private readonly IMapper mapper;
-        private readonly IOperation operation;
+        private readonly IOperationService operationService;
+        private readonly IServiceHandlingService serviceHandlingService;
 
-        public ServicesController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IOperation operation)
+        public ServicesController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IOperationService operationService, IServiceHandlingService serviceHandlingService)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
             this.mapper = mapper;
-            this.operation = operation;
+            this.operationService = operationService;
+            this.serviceHandlingService = serviceHandlingService;
         }
 
         [Authorize]
         [HttpGet]
-        public ActionResult<List<Service>> GetAllServices() => Ok(unitOfWork.Services.GetAll().ToList());
+        public IActionResult GetAllServices()
+        {
+            return Ok(unitOfWork.Services.GetAll().ToList());
+        }
 
         [Authorize]
         [HttpGet("{id}")]
-        public ActionResult<Service> GetService(int id)
+        public IActionResult GetService(Guid id)
         {
-            var result = unitOfWork.Services.Get(id);
-
-            if (result != null)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return NotFound($"there is no service with id {id}");
-            }
+            return Ok(unitOfWork.Services.GetById(id));
         }
 
         [Authorize]
-        [HttpGet("ForCurrentUser")]
-        public async Task<ActionResult<List<Service>>> GetAllForCurrentUser()
+        [HttpGet("UserSubscriptions")]
+        public async Task<IActionResult> GetUserSubscriptions()
         {
             var user = await userManager.GetUserAsync(User);
 
-            if (user != null)
-            {
-                return unitOfWork.Services.GetAllForUser(user).ToList();
-            }
-            else
-            {
-                return BadRequest("There is no authenticated user");
-            }
+            return Ok(serviceHandlingService.GetSubscriptions(user.Id, unitOfWork.Services.GetAll()));
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost("RegisterService")]
-        public async Task<ActionResult<Service>> CreateService(ServiceDTO data)
+        public async Task<IActionResult> CreateService(ServiceDTO data)
         {
-            if (User.IsInRole("admin"))
+            if (ModelState.IsValid)
             {
-                if (string.IsNullOrEmpty(data.Name))
-                {
-                    ModelState.AddModelError("name", "Service name must not be empty");
-                }
+                var service = mapper.Map<Service>(data);
 
-                if (ModelState.IsValid)
-                {
-                    var service = mapper.Map<Service>(data);
+                unitOfWork.Services.Create(service);
+                await unitOfWork.SaveChanges();
 
-                    unitOfWork.Services.Create(service);
-
-                    await unitOfWork.Save();
-
-                    return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+                return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
             }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return Conflict(ModelState);
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPut("{id}")]
-        public async Task<ActionResult<Service>> UpdateService(ServiceDTO data, int id)
+        public async Task<IActionResult> UpdateService(ServiceDTO data, Guid id)
         {
-            if (User.IsInRole("admin"))
+            if (ModelState.IsValid)
             {
-                if (string.IsNullOrEmpty(data.Name))
-                {
-                    ModelState.AddModelError("name", "Service name must not be empty");
-                }
-                if (data.Price < 0)
-                {
-                    ModelState.AddModelError("price", "Service price must not be less than 0");
-                }
+                var service = unitOfWork.Services.GetById(id);
 
-                if (ModelState.IsValid)
-                {
-                    var service = unitOfWork.Services.Get(id);
-                    service.Name = data.Name.Equals("string") ? service.Name : data.Name;
-                    service.Price = data.Price.Equals(0) ? service.Price : data.Price;
+                mapper.Map(data, service);
 
-                    unitOfWork.Services.Update(service);
-                    await unitOfWork.Save();
+                unitOfWork.Services.Update(service);
+                await unitOfWork.SaveChanges();
 
-                    return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+                return NoContent();
             }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return Conflict(ModelState);
         }
 
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult> RemoveService(int id)
+        public async Task<IActionResult> RemoveService(Guid id)
         {
-            if (User.IsInRole("admin"))
-            {
-                var target = unitOfWork.Services.Get(id);
-                string name = target.Name;
+            unitOfWork.Services.Delete(id);
+            await unitOfWork.SaveChanges();
 
-                unitOfWork.Services.Delete(id);
-
-                await unitOfWork.Save();
-
-                return Ok($"Service with name ${name} has been removed");
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return NoContent();
         }
 
         [Authorize]
-        [HttpPost("SubscribeOnService")]
-        public async Task<ActionResult> SubcribeOnService(SubscriptionDTO data)
+        [HttpPut("SubscribeOnService")]
+        public async Task<IActionResult> SubcribeOnService(SubscriptionDTO data)
         {
-            var user = await userManager.GetUserAsync(User);
-
-            if (user != null)
+            if (ModelState.IsValid)
             {
-                if (string.IsNullOrEmpty(data.CardNumber))
-                {
-                    ModelState.AddModelError("cardNumber", "card number must not be empty");
-                }
+                var user = await userManager.GetUserAsync(User);
 
-                if (ModelState.IsValid)
+                if (serviceHandlingService.Subscribe(unitOfWork.Services.GetById(data.ServiceId), user,
+                    unitOfWork.Cards.Get(c=>c.CardNumber.Equals(data.CardNumber)).First(), operationService))
                 {
-                    var card = unitOfWork.Cards.GetByNumberForUser(user, data.CardNumber);
+                    await unitOfWork.SaveChanges();
 
-                    if (card != null)
-                    {
-                        var service = unitOfWork.Services.Get(data.ServiceId);
-
-                        if (service != null)
-                        {
-                            var subscription = new SubscriptionSubscriber { Subscriber = user, Subscription = service };
-                            if (operation.PayForSubscription(card, service))
-                            {
-                                user.SubscriptionSubscribers.Add(subscription);
-                                service.SubscriptionSubscribers.Add(subscription);
-                                await unitOfWork.Save();
-                                return Ok($"subscribed successfully on service {service.Name}");
-                            }
-                            else
-                            {
-                                return BadRequest($"not enough money on card {card.CardNumber} to subcribe on service {service.Name}");
-                            }
-                        }
-                        else
-                        {
-                            return NotFound($"there is no service with id {data.ServiceId}");
-                        }
-                    }
-                    else
-                    {
-                        return NotFound($"there is no card with number {data.CardNumber}");
-                    }
-                }
-                else
-                {
-                    return Conflict(ModelState);
+                    return NoContent();
                 }
             }
-            else
-            {
-                return BadRequest("There is no authenticated user");
-            }
+            return Conflict(ModelState);
         }
 
         [Authorize]
-        [HttpDelete("UnsubscribeFromService")]
-        public async Task<ActionResult> UnsubscribeFromService(string serviceName)
+        [HttpPut("UnsubscribeFromService/{id}")]
+        public async Task<IActionResult> UnsubscribeFromService(Guid id)
         {
             var user = await userManager.GetUserAsync(User);
 
-            var service = unitOfWork.Services.GetByName(serviceName);
-            if(service != null)
+            if (serviceHandlingService.Unsubscribe(unitOfWork.Services.GetById(id), user))
             {
-                var subscription = user.SubscriptionSubscribers.FirstOrDefault(ss => ss.SubscriptionId.Equals(service.ServiceId));
-                if (subscription != null)
-                {
-                    user.SubscriptionSubscribers.Remove(subscription);
-                    service.SubscriptionSubscribers.Remove(subscription);
-                    await unitOfWork.Save();
-                    return Ok($"Subscription on {service} has been cancelled");
-                }
-                else
-                {
-                    return BadRequest($"You did not subscribe on service {serviceName}");
-                }
+                await unitOfWork.SaveChanges();
+
+                return NoContent();
             }
-            else
-            {
-                return NotFound();
-            }
+            return BadRequest(id);
         }
     }
 }

@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace BlackCaviarBank.Domain.Interfaces
 {
-    public interface IRepository<T, V> where T : class
+    public interface IRepository<TEntity> where TEntity : class
     {
-        IEnumerable<T> GetAll();
-        T Get(V id);
-        void Create(T item);
-        void Update(T item);
-        void Delete(V id);
+        IEnumerable<TEntity> GetAll();
+        TEntity GetById(Guid id);
+        IEnumerable<TEntity> Get(Func<TEntity, bool> predicate);
+        void Create(TEntity item);
+        void Update(TEntity item);
+        void Delete(Guid id);
     }
 }
