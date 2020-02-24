@@ -1,15 +1,14 @@
 ﻿using AutoMapper;
 using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Domain.Interfaces;
-using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
+using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -23,241 +22,74 @@ namespace BlackCaviarBank.Controllers
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
         private readonly IMapper mapper;
-        private readonly IGenerator generator;
+        private readonly IGeneratorService generatorService;
+        private readonly IFinanceAgentService financeAgentService;
 
-        public CardsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IGenerator generator)
+        public CardsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IFinanceAgentService financeAgentService, IMapper mapper, IGeneratorService generatorService)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
+            this.financeAgentService = financeAgentService;
             this.mapper = mapper;
-            this.generator = generator;
+            this.generatorService = generatorService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Card>>> GetCards()
+        public async Task<IActionResult> GetCards()
         {
             var user = await userManager.GetUserAsync(User);
 
-            if (user != null)
-            {
-                return Ok(unitOfWork.Cards.GetAllForUser(user).ToList());
-            }
-            else
-            {
-                return Ok(unitOfWork.Cards.GetAll().ToList());
-            }
+            return Ok(unitOfWork.Cards.Get(c => c.OwnerId == Guid.Parse(user.Id)));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Card>> GetCard(int id)
+        public IActionResult GetCard(Guid id)
         {
-            var user = await userManager.GetUserAsync(User);
-
-            if (user != null)
-            {
-                var result = unitOfWork.Cards.GetForUser(user, id);
-
-                if (result != null)
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return NotFound($"there is no card with id {id}");
-                }
-            }
-            else
-            {
-                //return BadRequest("There is no authenticated user");
-                var res = unitOfWork.Cards.Get(id);
-                if (res != null)
-                {
-                    return Ok(res);
-                }
-                else
-                {
-                    return NotFound();
-                }
-            }
+            return Ok(unitOfWork.Cards.GetById(id));
         }
 
         [HttpPost("BookCard")]
-        public async Task<ActionResult<Card>> BookCard(CardDTO data)
+        public async Task<IActionResult> BookCard(CardDTO data)
         {
-            var user = await userManager.GetUserAsync(User);
-
-            if (user != null)
+            if (ModelState.IsValid)
             {
-                if (data.Balance < 0)
-                {
-                    ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
-                }
+                var user = await userManager.GetUserAsync(User);
 
-                if (ModelState.IsValid)
-                {
-                    var card = mapper.Map<Card>(data);
+                var card = financeAgentService.GetCardFromData(data, user, generatorService, unitOfWork.Cards.GetAll().ToList(), mapper);
 
-                    card.CardNumber = generator.GetGeneratedCardNumber(unitOfWork.Cards.GetAll().ToList());
-                    
-                    var expDate = DateTime.Now;
-                    expDate = expDate.AddYears(5);
-                    card.ExpirationDate = expDate;
-                    
-                    var rand = new Random();
-                    int res = rand.Next(0, 2);
-                    card.PaymentSystem = res.Equals(0) ? "Visa" : "Mastercard";
+                unitOfWork.Cards.Create(card);
 
-                    var cvv2Builder = new StringBuilder();
-                    for(int i = 0; i < 3; i++)
-                    {
-                        cvv2Builder.Append(rand.Next(10));
-                    }
-                    card.CVV2 = cvv2Builder.ToString();
+                await unitOfWork.SaveChanges();
 
-                    card.Owner = user;
-                    user.Cards.Add(card);
-
-                    unitOfWork.Cards.Create(card);
-
-                    await unitOfWork.Save();
-
-                    return CreatedAtAction(nameof(GetCard), new { id = card.CardId }, card);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+                return CreatedAtAction(nameof(GetCard), new { card.CardId }, card);
             }
-            else
-            {
-                //return BadRequest("There is no authenticated user");
-                if (data.Balance < 0)
-                {
-                    ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
-                }
-
-                if (ModelState.IsValid)
-                {
-                    var card = mapper.Map<Card>(data);
-
-                    card.CardNumber = generator.GetGeneratedCardNumber(unitOfWork.Cards.GetAll().ToList());
-
-                    var expDate = DateTime.Now;
-                    expDate = expDate.AddYears(5);
-                    card.ExpirationDate = expDate;
-
-                    var rand = new Random();
-                    int res = rand.Next(0, 2);
-                    card.PaymentSystem = res.Equals(0) ? "Visa" : "Mastercard";
-
-                    var cvv2Builder = new StringBuilder();
-                    for (int i = 0; i < 3; i++)
-                    {
-                        cvv2Builder.Append(rand.Next(10));
-                    }
-                    card.CVV2 = cvv2Builder.ToString();
-
-                    var owner = unitOfWork.UserProfiles.GetAll().Last();
-                    card.Owner = owner;
-                    owner.Cards.Add(card);
-
-                    unitOfWork.Cards.Create(card);
-
-                    await unitOfWork.Save();
-
-                    return CreatedAtAction(nameof(GetCard), new { id = card.CardId }, card);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
-            }
+            return Conflict(ModelState);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Card>> UpdateCard(CardDTO data, int id)
+        public async Task<IActionResult> UpdateCard(CardDTO data, Guid id)
         {
-            var user = await userManager.GetUserAsync(User);
-
-            if (user != null)
+            if (ModelState.IsValid)
             {
-                if (data.Balance < 0)
-                {
-                    ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
-                }
+                var card = financeAgentService.GetUpdatedCard(unitOfWork.Cards.GetById(id), data, mapper);
 
-                if (ModelState.IsValid)
-                {
-                    var target = unitOfWork.Cards.GetForUser(user, id);
+                unitOfWork.Cards.Update(card);
 
-                    target.Balance = data.Balance.Equals(0) ? target.Balance : data.Balance;
+                await unitOfWork.SaveChanges();
 
-                    unitOfWork.Cards.Update(target);
-
-                    await unitOfWork.Save();
-
-                    return CreatedAtAction(nameof(GetCard), new { id = target.CardId }, target);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+                return NoContent();
             }
-            else
-            {
-                //return BadRequest("There is no authenticated user");
-                if (data.Balance < 0)
-                {
-                    ModelState.AddModelError("balanceValue", "Card balance must be greater or equal to 0");
-                }
-
-                if (ModelState.IsValid)
-                {
-                    var target = unitOfWork.Cards.Get(id);
-
-                    target.Balance = data.Balance.Equals(0) ? target.Balance : data.Balance;
-
-                    unitOfWork.Cards.Update(target);
-
-                    await unitOfWork.Save();
-
-                    return CreatedAtAction(nameof(GetCard), new { id = target.CardId }, target);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
-            }
+            return Conflict(ModelState);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteCard(int id)
+        public async Task<IActionResult> DeleteCard(Guid id)
         {
-            var user = await userManager.GetUserAsync(User);
+            unitOfWork.Cards.Delete(id);
 
-            if (user != null)
-            {
-                var target = unitOfWork.Cards.GetForUser(user, id);
-                var num = target.CardNumber;
+            await unitOfWork.SaveChanges();
 
-                unitOfWork.Cards.Delete(id);
-
-                await unitOfWork.Save();
-
-                return Ok($"Card with number {num} has been deleted");
-            }
-            else
-            {
-                //return BadRequest("There is no authenticated user");
-                var target = unitOfWork.Cards.Get(id);
-                var num = target.CardNumber;
-
-                unitOfWork.Cards.Delete(id);
-
-                await unitOfWork.Save();
-
-                return Ok($"Card with number {num} has been deleted");
-            }
+            return NoContent();
         }
     }
 }

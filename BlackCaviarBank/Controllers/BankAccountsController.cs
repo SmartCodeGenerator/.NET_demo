@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
 using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Domain.Interfaces;
-using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
+using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -22,166 +22,74 @@ namespace BlackCaviarBank.Controllers
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
         private readonly IMapper mapper;
-        private readonly IGenerator generator;
+        private readonly IGeneratorService generatorService;
+        private readonly IFinanceAgentService financeAgentService;
 
-        public BankAccountsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, IGenerator generator)
+        public BankAccountsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IFinanceAgentService financeAgentService, IMapper mapper, IGeneratorService generatorService)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
+            this.financeAgentService = financeAgentService;
             this.mapper = mapper;
-            this.generator = generator;
+            this.generatorService = generatorService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Account>>> GetAccounts()
+        public async Task<IActionResult> GetAccounts()
         {
             var user = await userManager.GetUserAsync(User);
 
-            if (user != null)
-            {
-                return Ok(unitOfWork.Accounts.GetAllForUser(user).ToList());
-            }
-            else
-            {
-                return BadRequest("There is no authenticated user");
-            }
+            return Ok(unitOfWork.Accounts.Get(a => a.OwnerId == Guid.Parse(user.Id)));
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Account>> GetAccount(int id)
+        public IActionResult GetAccount(Guid id)
         {
-            var user = await userManager.GetUserAsync(User);
-
-            if (user != null)
-            {
-                var result = unitOfWork.Accounts.GetForUser(user, id);
-
-                if (result != null)
-                {
-                    return Ok(result);
-                }
-                else
-                {
-                    return NotFound($"there is no account with id {id}");
-                }
-            }
-            else
-            {
-                return BadRequest("There is no authenticated user");
-            }
+            return Ok(unitOfWork.Accounts.GetById(id));
         }
 
         [HttpPost("CreateAccount")]
-        public async Task<ActionResult<Account>> CreateAccount(AccountDTO data)
+        public async Task<IActionResult> CreateAccount(AccountDTO data)
         {
-            var user = await userManager.GetUserAsync(User);
-
-            if (user != null)
+            if (ModelState.IsValid)
             {
-                if (string.IsNullOrEmpty(data.Name))
-                {
-                    ModelState.AddModelError("name", "Account name must not be empty");
-                }
-                if (data.Balance < 0)
-                {
-                    ModelState.AddModelError("balanceValue", "Account balance must be greater or equal to 0");
-                }
-                if (data.InterestRate < 0 || data.InterestRate > 1)
-                {
-                    ModelState.AddModelError("interestRateValue", "Account interest rate must be greater or equal to 0 and not greater than 1");
-                }
+                var user = await userManager.GetUserAsync(User);
 
-                if (ModelState.IsValid)
-                {
-                    var account = mapper.Map<Account>(data);
+                var account = financeAgentService.GetAccountFromData(data, user, generatorService, unitOfWork.Accounts.GetAll().ToList(), mapper);
 
-                    account.AccountNumber = generator.GetGeneratedAccountNumber(unitOfWork.Accounts.GetAll().ToList());
-                    account.OpeningDate = DateTime.Now;
-                    account.Owner = user;
-                    user.Accounts.Add(account);
+                unitOfWork.Accounts.Create(account);
 
-                    unitOfWork.Accounts.Create(account);
+                await unitOfWork.SaveChanges();
 
-                    await unitOfWork.Save();
-
-                    return CreatedAtAction(nameof(GetAccount), new { id = account.AccountId }, account);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+                return CreatedAtAction(nameof(GetAccount), new { account.AccountId }, account);
             }
-            else
-            {
-                return BadRequest("There is no authenticated user");
-            }
+            return Conflict(ModelState);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Account>> UpdateAccount(AccountDTO data, int id)
+        public async Task<IActionResult> UpdateAccount(AccountDTO data, Guid id)
         {
-            var user = await userManager.GetUserAsync(User);
-
-            if (user != null)
+            if (ModelState.IsValid)
             {
-                if (string.IsNullOrEmpty(data.Name))
-                {
-                    ModelState.AddModelError("name", "Account name must not be empty");
-                }
-                if (data.Balance < 0)
-                {
-                    ModelState.AddModelError("balanceValue", "Account balance must be greater or equal to 0");
-                }
-                if (data.InterestRate < 0)
-                {
-                    ModelState.AddModelError("interestRateValue", "Account interest rate must be greater or equal to 0");
-                }
+                var account = financeAgentService.GetUpdatedAccount(unitOfWork.Accounts.GetById(id), data, mapper);
 
-                if (ModelState.IsValid)
-                {
-                    var target = unitOfWork.Accounts.GetForUser(user, id);
+                unitOfWork.Accounts.Update(account);
 
-                    target.Name = data.Name.Equals("string") ? target.Name : data.Name;
-                    target.Balance = data.Balance.Equals(0) ? target.Balance : data.Balance;
-                    target.InterestRate = data.InterestRate.Equals(0) ? target.InterestRate : data.InterestRate;
+                await unitOfWork.SaveChanges();
 
-                    unitOfWork.Accounts.Update(target);
-                    await unitOfWork.Save();
-
-                    return CreatedAtAction(nameof(GetAccount), new { id = target.AccountId }, target);
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+                return NoContent();
             }
-            else
-            {
-                return BadRequest("There is no authenticated user");
-            } 
+            return Conflict(ModelState);
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult> CloseAccount(int id)
+        public async Task<IActionResult> DeleteAccount(Guid id)
         {
-            var user = await userManager.GetUserAsync(User);
+            unitOfWork.Accounts.Delete(id);
 
-            if (user != null)
-            {
-                var target = unitOfWork.Accounts.GetForUser(user, id);
+            await unitOfWork.SaveChanges();
 
-                string number = target.AccountNumber;
-
-                unitOfWork.Accounts.Delete(target.AccountId);
-
-                await unitOfWork.Save();
-
-                return Ok($"Account with number {number} has been closed");
-            }
-            else
-            {
-                return BadRequest("There is no authenticated user");
-            }
+            return NoContent();
         }
     }
 }

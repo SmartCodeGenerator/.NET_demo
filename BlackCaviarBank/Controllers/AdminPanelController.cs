@@ -1,17 +1,17 @@
 ﻿using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Domain.Interfaces;
-using BlackCaviarBank.Infrastructure.Business;
-using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
+using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
+using BlackCaviarBank.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
 {
+    [Authorize(Roles = "admin")]
     [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
@@ -19,140 +19,65 @@ namespace BlackCaviarBank.Controllers
     {
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
+        private readonly IAdministrationService administrationService;
 
-        public AdminPanelController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork)
+        public AdminPanelController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IAdministrationService administrationService)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
+            this.administrationService = administrationService;
         }
 
-        [HttpGet("GetUsers")]
-        public async Task<ActionResult<List<UserProfile>>> GetUsers(string token)
+        [HttpGet("UserProfiles")]
+        public IActionResult GetUserProfiles()
         {
-            var auth = new JWTService(new JWTAuthenticationOptions().SecretKey);
-            var claims = auth.GetTokenClaims(token);
-            var role = claims.FirstOrDefault(cl => cl.Type.Equals(ClaimTypes.Role)).Value;
-
-            if (role.Equals("admin"))
-            {
-                var users = await userManager.GetUsersInRoleAsync("user");
-
-                if (users != null)
-                {
-                    return Ok(users);
-                }
-                else
-                {
-                    return NotFound();
-                }
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return Ok(unitOfWork.UserProfiles.GetAll());
         }
 
-        [HttpPost("AssignRolesToUser")]
-        public async Task<ActionResult> AssignRolesToUser(string userId, List<string> roles)
+        [HttpGet("UserProfiles/{id}")]
+        public IActionResult GetUserProfileInfo(string userId)
         {
-            if (User.IsInRole("admin"))
-            {
-                var user = await userManager.FindByIdAsync(userId);
-
-                if (user != null)
-                {
-                    var userRoles = await userManager.GetRolesAsync(user);
-
-                    var rolesToAdd = roles.Except(userRoles);
-                    var rolesToRemove = userRoles.Except(roles);
-
-                    await userManager.AddToRolesAsync(user, rolesToAdd);
-                    await userManager.RemoveFromRolesAsync(user, rolesToRemove);
-
-                    var result = await userManager.GetRolesAsync(user);
-                    return Ok(result);
-                }
-                else
-                {
-                    return NotFound();
-                }
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return Ok(unitOfWork.UserProfiles.GetById(Guid.Parse(userId)));
         }
 
-        [HttpPost("BanUser")]
-        public async Task<ActionResult> BanUser(string userId)
+        [HttpPut("AssignRolesToUser/{id}")]
+        public async Task<IActionResult> AssignRolesToUser(string userId, List<string> roles)
         {
-            if (User.IsInRole("admin"))
+            if (await administrationService.AssignRolesToUser(userManager, userId, roles))
             {
-                var user = await userManager.FindByIdAsync(userId);
-
-                if (user != null)
-                {
-                    var roles = await userManager.GetRolesAsync(user);
-                    if (!roles.Contains("admin"))
-                    {
-                        user.IsBanned = true;
-
-                        unitOfWork.UserProfiles.Update(user);
-
-                        await unitOfWork.Save();
-
-                        return Ok($"User {user.UserName} has been banned");
-                    }
-                    else
-                    {
-                        return BadRequest();
-                    }
-                }
-                else
-                {
-                    return NotFound();
-                }
+                return NoContent();
             }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return NotFound(userId);
         }
 
-        [HttpPost("UnbanUser")]
-        public async Task<ActionResult> UnbanUser(string userId)
+        [HttpPut("BanUser/{id}")]
+        public async Task<IActionResult> BanUser(string userId)
         {
-            if (User.IsInRole("admin"))
+            if (await administrationService.BanUserProfile(userManager, userId))
             {
-                var user = await userManager.FindByIdAsync(userId);
-
-                if (user != null)
-                {
-                    var roles = await userManager.GetRolesAsync(user);
-                    if (!roles.Contains("admin"))
-                    {
-                        user.IsBanned = false;
-
-                        unitOfWork.UserProfiles.Update(user);
-
-                        await unitOfWork.Save();
-
-                        return Ok($"User {user.UserName} has been unbanned");
-                    }
-                    else
-                    {
-                        return BadRequest();
-                    }
-                }
-                else
-                {
-                    return NotFound();
-                }
+                return NoContent();
             }
-            else
+            return BadRequest(userId);
+        }
+
+        [HttpPut("UnbanUser/{id}")]
+        public async Task<IActionResult> UnbanUser(string userId)
+        {
+            if (await administrationService.UnbanUserProfile(userManager, userId))
             {
-                throw new UnauthorizedAccessException("You must be admin");
+                return NoContent();
             }
+            return BadRequest(userId);
+        }
+
+        [HttpDelete("UserProfiles/{id}")]
+        public async Task<IActionResult> DeleteUserProfile(string userId)
+        {
+            if (await administrationService.DeleteUserProfile(userManager, userId))
+            {
+                return NoContent();
+            }
+            return BadRequest(userId);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace BlackCaviarBank.Domain.Core
 {
     public class Account
     {
-        public int AccountId { get; set; }
+        public Guid AccountId { get; set; }
         public string AccountNumber { get; set; }
         public string Name { get; set; }
         public DateTime? OpeningDate { get; set; }
