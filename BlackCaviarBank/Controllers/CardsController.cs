@@ -1,7 +1,5 @@
-﻿using AutoMapper;
-using BlackCaviarBank.Domain.Core;
+﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
-using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -21,47 +19,38 @@ namespace BlackCaviarBank.Controllers
     {
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
-        private readonly IMapper mapper;
-        private readonly IGeneratorService generatorService;
-        private readonly IFinanceAgentService financeAgentService;
+        private readonly ICardService cardService;
 
-        public CardsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IFinanceAgentService financeAgentService, IMapper mapper, IGeneratorService generatorService)
+        public CardsController(UserManager<UserProfile> userManager, UnitOfWork unitOfWork, ICardService cardService)
         {
             this.userManager = userManager;
-            this.unitOfWork = (UnitOfWork)unitOfWork;
-            this.financeAgentService = financeAgentService;
-            this.mapper = mapper;
-            this.generatorService = generatorService;
+            this.unitOfWork = unitOfWork;
+            this.cardService = cardService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCards()
         {
-            var user = await userManager.GetUserAsync(User);
-
-            return Ok(unitOfWork.Cards.Get(c => c.OwnerId == Guid.Parse(user.Id)));
+            return Ok(cardService.GetCards(await userManager.GetUserAsync(User)));
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetCard(Guid id)
+        public async Task<IActionResult> GetCard(Guid id)
         {
-            return Ok(unitOfWork.Cards.GetById(id));
+            return Ok(await cardService.GetCard(id));
         }
 
-        [HttpPost("BookCard")]
-        public async Task<IActionResult> BookCard(CardDTO data)
+        [HttpPost("OrderCard")]
+        public async Task<IActionResult> OrderCard(CardDTO data)
         {
             if (ModelState.IsValid)
             {
-                var user = await userManager.GetUserAsync(User);
-
-                var card = financeAgentService.GetCardFromData(data, user, generatorService, unitOfWork.Cards.GetAll().ToList(), mapper);
-
-                unitOfWork.Cards.Create(card);
-
+                await cardService.OrderCard(data, await userManager.GetUserAsync(User));
                 await unitOfWork.SaveChanges();
 
-                return CreatedAtAction(nameof(GetCard), new { card.CardId }, card);
+                var createdCards = cardService.GetCards(await userManager.GetUserAsync(User));
+
+                return CreatedAtAction(nameof(GetCard), new { createdCards.Last().CardId }, createdCards.Last());
             }
             return Conflict(ModelState);
         }
@@ -71,10 +60,7 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var card = financeAgentService.GetUpdatedCard(unitOfWork.Cards.GetById(id), data, mapper);
-
-                unitOfWork.Cards.Update(card);
-
+                await cardService.UpdateCard(id, data);
                 await unitOfWork.SaveChanges();
 
                 return NoContent();
@@ -85,8 +71,7 @@ namespace BlackCaviarBank.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCard(Guid id)
         {
-            unitOfWork.Cards.Delete(id);
-
+            cardService.DeleteCard(id);
             await unitOfWork.SaveChanges();
 
             return NoContent();

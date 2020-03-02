@@ -7,9 +7,11 @@ namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IAdministrationService
     {
-        public Task<bool> AssignRolesToUser(UserManager<UserProfile> userManager, string userId, IList<string> roles);
-        public Task<bool> BanUserProfile(UserManager<UserProfile> userManager, string userId);
-        public Task<bool> UnbanUserProfile(UserManager<UserProfile> userManager, string userId);
-        public Task<bool> DeleteUserProfile(UserManager<UserProfile> userManager, string userId);
+        Task<IEnumerable<UserProfile>> GetUserProfiles();
+        Task<UserProfile> GetUserProfileInfo(string userId);
+        Task<bool> AssignRolesToUser(UserManager<UserProfile> userManager, string userId, IList<string> roles);
+        Task<bool> BanUserProfile(UserManager<UserProfile> userManager, string userId);
+        Task<bool> UnbanUserProfile(UserManager<UserProfile> userManager, string userId);
+        Task<bool> DeleteUserProfile(UserManager<UserProfile> userManager, string userId);
     }
 }

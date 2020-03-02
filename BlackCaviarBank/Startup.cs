@@ -5,9 +5,8 @@ using BlackCaviarBank.Infrastructure.Business;
 using BlackCaviarBank.Infrastructure.Business.Resources.Mappings;
 using BlackCaviarBank.Infrastructure.Business.Resources.ServiceOptions;
 using BlackCaviarBank.Infrastructure.Data;
-using BlackCaviarBank.Infrastructure.Data.Repositories;
+using BlackCaviarBank.Infrastructure.Data.Repositories.Extensions;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
-using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -38,25 +37,26 @@ namespace BlackCaviarBank
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<IRepository<Account>, BaseRepository<Account>>();
-            services.AddScoped<IRepository<Card>, BaseRepository<Card>>();
-            services.AddScoped<IRepository<Notification>, BaseRepository<Notification>>();
-            services.AddScoped<IRepository<Service>, BaseRepository<Service>>();
-            services.AddScoped<IRepository<Transaction>, BaseRepository<Transaction>>();
-            services.AddScoped<IRepository<UserProfile>, BaseRepository<UserProfile>>();
+            services.AddScoped<IRepository<Account>, AccountRepository>();
+            services.AddScoped<IRepository<Card>, CardRepository>();
+            services.AddScoped<IRepository<Notification>, NotificatiobRepository>();
+            services.AddScoped<IRepository<Service>, ServiceRepository>();
+            services.AddScoped<IRepository<Transaction>, TransactionRepository>();
+            services.AddScoped<IRepository<UserProfile>, UserProfileRepository>();
 
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddSingleton<UnitOfWork>();
 
-            services.AddScoped<IGeneratorService, NumberGeneratorService>();
-            services.AddScoped<IOperationService, FinancialOperationService>();
-            services.AddScoped<INotificationService, BankingNotificationService>();
-            services.AddScoped<IRegistrationService, RegistrationService>();
-            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IAdministrationService, AdministrationService>();
-            services.AddScoped<IFinanceAgentService, FinanceAgentService>();
-            services.AddScoped<IServiceHandlingService, ServiceHandlingService>();
-            services.AddScoped<IRolesManagementService, RolesManagementService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<ICardService, CardService>();
+            services.AddScoped<INotificationService, BankingNotificationService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IOperationService, FinancialOperationService>();
+            services.AddScoped<IGeneratorService, NumberGeneratorService>();
+            services.AddScoped<IRegistrationService, RegistrationService>();
+            services.AddScoped<IRolesManagementService, RolesManagementService>();
+            services.AddScoped<IServiceHandlingService, ServiceHandlingService>();
 
             services.AddDbContext<ApplicationContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));

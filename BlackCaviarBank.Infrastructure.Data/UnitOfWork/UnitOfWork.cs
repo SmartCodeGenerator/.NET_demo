@@ -1,20 +1,21 @@
-﻿using System;
-using System.Threading.Tasks;
-using BlackCaviarBank.Domain.Core;
+﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Infrastructure.Data.Repositories;
+using BlackCaviarBank.Infrastructure.Data.Repositories.Extensions;
+using System;
+using System.Threading.Tasks;
 
-namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations
+namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
 {
-    public class UnitOfWork : IUnitOfWork
+    public class UnitOfWork
     {
         private readonly ApplicationContext applicationContext;
 
-        private BaseRepository<Account> accountRepository;
-        private BaseRepository<Card> cardRepository;
-        private BaseRepository<Notification> notificationRepository;
-        private BaseRepository<Service> serviceRepository;
-        private BaseRepository<Transaction> transactionRepository;
-        private BaseRepository<UserProfile> userProfileRepository;
+        private AccountRepository accountRepository;
+        private CardRepository cardRepository;
+        private NotificatiobRepository notificationRepository;
+        private ServiceRepository serviceRepository;
+        private TransactionRepository transactionRepository;
+        private UserProfileRepository userProfileRepository;
 
         private bool disposed = false;
 
@@ -29,7 +30,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations
             {
                 if (accountRepository == null)
                 {
-                    accountRepository = new BaseRepository<Account>(applicationContext);
+                    accountRepository = new AccountRepository(applicationContext);
                 }
                 return accountRepository;
             }
@@ -41,7 +42,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations
             {
                 if (cardRepository == null)
                 {
-                    cardRepository = new BaseRepository<Card>(applicationContext);
+                    cardRepository = new CardRepository(applicationContext);
                 }
                 return cardRepository;
             }
@@ -53,7 +54,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations
             {
                 if (notificationRepository == null)
                 {
-                    notificationRepository = new BaseRepository<Notification>(applicationContext);
+                    notificationRepository = new NotificatiobRepository(applicationContext);
                 }
                 return notificationRepository;
             }
@@ -65,7 +66,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations
             {
                 if (serviceRepository == null)
                 {
-                    serviceRepository = new BaseRepository<Service>(applicationContext);
+                    serviceRepository = new ServiceRepository(applicationContext);
                 }
                 return serviceRepository;
             }
@@ -77,7 +78,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations
             {
                 if (transactionRepository == null)
                 {
-                    transactionRepository = new BaseRepository<Transaction>(applicationContext);
+                    transactionRepository = new TransactionRepository(applicationContext);
                 }
                 return transactionRepository;
             }
@@ -89,7 +90,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations
             {
                 if (userProfileRepository == null)
                 {
-                    userProfileRepository = new BaseRepository<UserProfile>(applicationContext);
+                    userProfileRepository = new UserProfileRepository(applicationContext);
                 }
                 return userProfileRepository;
             }

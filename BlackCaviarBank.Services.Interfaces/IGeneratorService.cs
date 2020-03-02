@@ -5,7 +5,7 @@ namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IGeneratorService
     {
-        string GetGeneratedCardNumber(List<Card> cardsToCheck);
-        string GetGeneratedAccountNumber(List<Account> accountsToCheck);
+        string GetGeneratedCardNumber(IEnumerable<Card> cardsToCheck);
+        string GetGeneratedAccountNumber(IEnumerable<Account> accountsToCheck);
     }
 }

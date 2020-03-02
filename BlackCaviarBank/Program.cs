@@ -1,5 +1,5 @@
 using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Infrastructure.Data;
+using BlackCaviarBank.Infrastructure.Data.DbSeeders;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;

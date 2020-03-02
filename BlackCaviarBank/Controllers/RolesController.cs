@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -54,7 +53,7 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpDelete("{roleId}")]
-        public async Task<ActionResult> DeleteRole(string roleId)
+        public async Task<IActionResult> DeleteRole(string roleId)
         {
             var errors = await rolesManagementService.DeleteRole(roleId, roleManager);
 

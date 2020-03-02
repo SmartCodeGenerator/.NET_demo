@@ -20,13 +20,13 @@ namespace BlackCaviarBank.Controllers
     {
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
-        private readonly INotificationService notifier;
+        private readonly INotificationService notificationService;
 
-        public NotificationsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, INotificationService notifier)
+        public NotificationsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, INotificationService notificationService)
         {
             this.userManager = userManager;
             this.unitOfWork = (UnitOfWork)unitOfWork;
-            this.notifier = notifier;
+            this.notificationService = notificationService;
         }
 
         [Authorize(Roles = "admin")]
@@ -53,11 +53,11 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpPost("SendForUser")]
-        public async Task<ActionResult<Notification>> SendNotificationForUser(UserNotificationDTO data)
+        public async Task<IActionResult> SendNotificationForUser(UserNotificationDTO data)
         {
             if (ModelState.IsValid)
             {
-                var notification = notifier.Notify(unitOfWork.Services.GetById(data.ServiceSenderId), unitOfWork.UserProfiles.GetById(Guid.Parse(data.UserReceiverId)), data.Text);
+                var notification = notificationService.Notify(unitOfWork.Services.GetById(data.ServiceSenderId), unitOfWork.UserProfiles.GetById(Guid.Parse(data.UserReceiverId)), data.Text);
                 
                 unitOfWork.Notifications.Create(notification);
                 await unitOfWork.SaveChanges();

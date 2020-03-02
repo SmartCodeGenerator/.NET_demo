@@ -8,7 +8,7 @@ namespace BlackCaviarBank.Infrastructure.Business
 {
     public class NumberGeneratorService : IGeneratorService
     {
-        public string GetGeneratedCardNumber(List<Card> cardsToCheck)
+        public string GetGeneratedCardNumber(IEnumerable<Card> cardsToCheck)
         {
             var rand = new Random();
             StringBuilder numBuilder = new StringBuilder();
@@ -28,7 +28,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             return numBuilder.ToString();
         }
 
-        public string GetGeneratedAccountNumber(List<Account> accountsToCheck)
+        public string GetGeneratedAccountNumber(IEnumerable<Account> accountsToCheck)
         {
             var rand = new Random();
             StringBuilder numBuilder = new StringBuilder();

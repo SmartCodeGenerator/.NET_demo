@@ -1,6 +1,8 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +11,13 @@ namespace BlackCaviarBank.Infrastructure.Business
 {
     public class AdministrationService : IAdministrationService
     {
+        private readonly IRepository<UserProfile> repository;
+
+        public AdministrationService(IRepository<UserProfile> repository)
+        {
+            this.repository = repository;
+        }
+
         public async Task<bool> AssignRolesToUser(UserManager<UserProfile> userManager, string userId, IList<string> roles)
         {
             UserProfile user = await userManager.FindByIdAsync(userId);
@@ -58,6 +67,16 @@ namespace BlackCaviarBank.Infrastructure.Business
                 return true;
             }
             return false;
+        }
+
+        public async Task<UserProfile> GetUserProfileInfo(string userId)
+        {
+            return await repository.GetById(Guid.Parse(userId));
+        }
+
+        public async Task<IEnumerable<UserProfile>> GetUserProfiles()
+        {
+            return await repository.GetAll();
         }
 
         public async Task<bool> UnbanUserProfile(UserManager<UserProfile> userManager, string userId)

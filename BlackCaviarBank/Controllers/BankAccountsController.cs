@@ -1,7 +1,5 @@
-﻿using AutoMapper;
-using BlackCaviarBank.Domain.Core;
+﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
-using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -21,31 +19,25 @@ namespace BlackCaviarBank.Controllers
     {
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
-        private readonly IMapper mapper;
-        private readonly IGeneratorService generatorService;
-        private readonly IFinanceAgentService financeAgentService;
+        private readonly IAccountService accountService;
 
-        public BankAccountsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IFinanceAgentService financeAgentService, IMapper mapper, IGeneratorService generatorService)
+        public BankAccountsController(UserManager<UserProfile> userManager, UnitOfWork unitOfWork, IAccountService accountService)
         {
             this.userManager = userManager;
-            this.unitOfWork = (UnitOfWork)unitOfWork;
-            this.financeAgentService = financeAgentService;
-            this.mapper = mapper;
-            this.generatorService = generatorService;
+            this.unitOfWork = unitOfWork;
+            this.accountService = accountService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAccounts()
         {
-            var user = await userManager.GetUserAsync(User);
-
-            return Ok(unitOfWork.Accounts.Get(a => a.OwnerId == Guid.Parse(user.Id)));
+            return Ok(accountService.GetAccounts(await userManager.GetUserAsync(User)));
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetAccount(Guid id)
+        public async Task<IActionResult> GetAccount(Guid id)
         {
-            return Ok(unitOfWork.Accounts.GetById(id));
+            return Ok(await accountService.GetAccount(id));
         }
 
         [HttpPost("CreateAccount")]
@@ -53,15 +45,12 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await userManager.GetUserAsync(User);
-
-                var account = financeAgentService.GetAccountFromData(data, user, generatorService, unitOfWork.Accounts.GetAll().ToList(), mapper);
-
-                unitOfWork.Accounts.Create(account);
-
+                await accountService.CreateAccount(data, await userManager.GetUserAsync(User));
                 await unitOfWork.SaveChanges();
 
-                return CreatedAtAction(nameof(GetAccount), new { account.AccountId }, account);
+                return CreatedAtAction(nameof(GetAccount),
+                    new { unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name)).FirstOrDefault().AccountId },
+                    unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name)).FirstOrDefault());
             }
             return Conflict(ModelState);
         }
@@ -71,10 +60,7 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var account = financeAgentService.GetUpdatedAccount(unitOfWork.Accounts.GetById(id), data, mapper);
-
-                unitOfWork.Accounts.Update(account);
-
+                await accountService.UpdateAccount(id, data);
                 await unitOfWork.SaveChanges();
 
                 return NoContent();
@@ -85,8 +71,7 @@ namespace BlackCaviarBank.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAccount(Guid id)
         {
-            unitOfWork.Accounts.Delete(id);
-
+            accountService.DeleteAccount(id);
             await unitOfWork.SaveChanges();
 
             return NoContent();

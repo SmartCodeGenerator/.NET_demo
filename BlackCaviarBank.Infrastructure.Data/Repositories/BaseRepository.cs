@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Data.Repositories
 {
@@ -18,9 +19,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories
             dbSet = applicationContext.Set<TEntity>();
         }
 
-        public void Create(TEntity item)
+        public async Task Create(TEntity item)
         {
-            dbSet.Add(item);
+            await dbSet.AddAsync(item);
         }
 
         public void Delete(Guid id)
@@ -38,16 +39,16 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories
             return dbSet.AsNoTracking().Where(predicate).ToList();
         }
 
-        public IEnumerable<TEntity> GetAll()
+        public virtual async Task<IEnumerable<TEntity>> GetAll()
         {
             dbSet.Load();
 
-            return dbSet.AsNoTracking();
+            return await dbSet.AsNoTracking().ToListAsync();
         }
 
-        public TEntity GetById(Guid id)
+        public async Task<TEntity> GetById(Guid id)
         {
-            return dbSet.Find(id);
+            return await dbSet.FindAsync(id);
         }
 
         public void Update(TEntity item)

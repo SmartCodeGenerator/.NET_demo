@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlackCaviarBank.Domain.Core\BlackCaviarBank.Domain.Core.csproj" />
+    <ProjectReference Include="..\BlackCaviarBank.Domain.Interfaces\BlackCaviarBank.Domain.Interfaces.csproj" />
     <ProjectReference Include="..\BlackCaviarBank.Services.Interfaces\BlackCaviarBank.Services.Interfaces.csproj" />
   </ItemGroup>
 

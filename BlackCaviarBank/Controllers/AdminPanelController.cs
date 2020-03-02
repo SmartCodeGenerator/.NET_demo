@@ -1,11 +1,8 @@
 ﻿using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
-using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -18,26 +15,24 @@ namespace BlackCaviarBank.Controllers
     public class AdminPanelController : ControllerBase
     {
         private readonly UserManager<UserProfile> userManager;
-        private readonly UnitOfWork unitOfWork;
         private readonly IAdministrationService administrationService;
 
-        public AdminPanelController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IAdministrationService administrationService)
+        public AdminPanelController(UserManager<UserProfile> userManager, IAdministrationService administrationService)
         {
             this.userManager = userManager;
-            this.unitOfWork = (UnitOfWork)unitOfWork;
             this.administrationService = administrationService;
         }
 
         [HttpGet("UserProfiles")]
-        public IActionResult GetUserProfiles()
+        public async Task<IActionResult> GetUserProfiles()
         {
-            return Ok(unitOfWork.UserProfiles.GetAll());
+            return Ok(await administrationService.GetUserProfiles());
         }
 
         [HttpGet("UserProfiles/{id}")]
-        public IActionResult GetUserProfileInfo(string userId)
+        public async Task<IActionResult> GetUserProfileInfo(string userId)
         {
-            return Ok(unitOfWork.UserProfiles.GetById(Guid.Parse(userId)));
+            return Ok(await administrationService.GetUserProfileInfo(userId));
         }
 
         [HttpPut("AssignRolesToUser/{id}")]
