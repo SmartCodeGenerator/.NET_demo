@@ -1,8 +1,14 @@
-﻿namespace BlackCaviarBank.Services.Interfaces.Resources.DTOs
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace BlackCaviarBank.Services.Interfaces.Resources.DTOs
 {
     public class SubscribersNotificationDTO
     {
+        [Required, StringLength(255)]
         public string Text { get; set; }
-        public int ServiceSenderId { get; set; }
+
+        [Required]
+        public Guid ServiceSenderId { get; set; }
     }
 }

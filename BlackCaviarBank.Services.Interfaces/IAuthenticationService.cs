@@ -7,6 +7,6 @@ namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IAuthenticationService
     {
-        public Task<string> Authenticate(UserManager<UserProfile> userManager, LoginUserDTO userDTO);
+        Task<string> Authenticate(UserManager<UserProfile> userManager, LoginUserDTO userDTO);
     }
 }

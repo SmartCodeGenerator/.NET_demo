@@ -1,14 +1,11 @@
 ﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
-using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -22,114 +19,70 @@ namespace BlackCaviarBank.Controllers
         private readonly UnitOfWork unitOfWork;
         private readonly INotificationService notificationService;
 
-        public NotificationsController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, INotificationService notificationService)
+        public NotificationsController(UserManager<UserProfile> userManager, UnitOfWork unitOfWork, INotificationService notificationService)
         {
             this.userManager = userManager;
-            this.unitOfWork = (UnitOfWork)unitOfWork;
+            this.unitOfWork = unitOfWork;
             this.notificationService = notificationService;
         }
 
         [Authorize(Roles = "admin")]
         [HttpGet]
-        public IActionResult GetAllNotifications()
+        public async Task<IActionResult> GetAllNotifications()
         {
-            return Ok(unitOfWork.Notifications.GetAll().ToList());
+            return Ok(await notificationService.GetNotifications());
         }
 
         [Authorize(Roles = "admin")]
         [HttpGet("{id}")]
-        public IActionResult GetNotification(Guid id)
+        public async Task<IActionResult> GetNotification(Guid id)
         {
-            return Ok(unitOfWork.Notifications.GetById(id));
+            return Ok(await notificationService.GetNotificationById(id));
         }
 
         [Authorize]
         [HttpGet("ForCurrentUser")]
         public async Task<IActionResult> GetAllForCurrentUser()
         {
-            var user = await userManager.GetUserAsync(User);
-
-            return Ok(unitOfWork.Notifications.Get(n => n.ReceiverId.Equals(user.Id)));
+            return Ok(notificationService.GetNotificationsForUser(await userManager.GetUserAsync(User)));
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost("SendForUser")]
         public async Task<IActionResult> SendNotificationForUser(UserNotificationDTO data)
         {
             if (ModelState.IsValid)
             {
-                var notification = notificationService.Notify(unitOfWork.Services.GetById(data.ServiceSenderId), unitOfWork.UserProfiles.GetById(Guid.Parse(data.UserReceiverId)), data.Text);
-                
-                unitOfWork.Notifications.Create(notification);
+                var result = await notificationService.NotifyUser(await userManager.GetUserAsync(User), data);
                 await unitOfWork.SaveChanges();
                 
-                return CreatedAtAction(nameof(GetNotification), new { id = notification.NotificationId }, notification);
+                return CreatedAtAction(nameof(GetNotification), new { id = result.NotificationId }, result);
             }
             return Conflict(ModelState);
         }
 
+        [Authorize(Roles = "admin")]
         [HttpPost("SendForSubscribers")]
-        public async Task<ActionResult<List<Notification>>> SendNotificationForSubscribers(SubscribersNotificationDTO data)
+        public async Task<IActionResult> SendNotificationForSubscribers(SubscribersNotificationDTO data)
         {
-            if (User.IsInRole("admin"))
+            if (ModelState.IsValid)
             {
-                if (string.IsNullOrEmpty(data.Text))
-                {
-                    ModelState.AddModelError("text", "notification text must not be empty");
-                }
+                await notificationService.NotifySubscribers(data);
+                await unitOfWork.SaveChanges();
 
-                if (ModelState.IsValid)
-                {
-                    var service = unitOfWork.Services.Get(data.ServiceSenderId);
-
-                    if (service != null)
-                    {
-                        var notifications = notifier.NotifyAll(service, data.Text);
-                        foreach (var notification in notifications)
-                        {
-                            unitOfWork.Notifications.Create(notification);
-                        }
-                        await unitOfWork.Save();
-                        return Ok(notifications);
-                    }
-                    else
-                    {
-                        return NotFound($"there is no service with id {data.ServiceSenderId}");
-                    }
-                }
-                else
-                {
-                    return Conflict(ModelState);
-                }
+                return RedirectToAction(nameof(GetAllNotifications));
             }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return Conflict(ModelState);
         }
 
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult> DeleteNotification(int id)
+        public async Task<IActionResult> DeleteNotification(Guid id)
         {
-            if (User.IsInRole("admin"))
-            {
-                var notification = unitOfWork.Notifications.Get(id);
+            notificationService.DeleteNotification(id);
+            await unitOfWork.SaveChanges();
 
-                if (notification != null)
-                {
-                    var time = notification.Time;
-                    unitOfWork.Notifications.Delete(id);
-                    await unitOfWork.Save();
-                    return Ok($"notification with id {id} from {time} has been deleted");
-                }
-                else
-                {
-                    return NotFound($"there is no notification with id {id}");
-                }
-            }
-            else
-            {
-                throw new UnauthorizedAccessException("You must be admin");
-            }
+            return NoContent();
         }
     }
 }

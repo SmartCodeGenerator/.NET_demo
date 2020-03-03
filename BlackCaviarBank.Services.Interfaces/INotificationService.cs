@@ -1,11 +1,18 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
+using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Services.Interfaces
 {
     public interface INotificationService
     {
-        List<Notification> NotifyAll(Service sender, string message);
-        Notification Notify(Service sender, UserProfile receiver, string message);
+        Task<IEnumerable<Notification>> GetNotifications();
+        Task<Notification> GetNotificationById(Guid id);
+        IEnumerable<Notification> GetNotificationsForUser(UserProfile user);
+        Task<Notification> NotifyUser(UserProfile user, UserNotificationDTO userNotification);
+        Task NotifySubscribers(SubscribersNotificationDTO subscribersNotification);
+        void DeleteNotification(Guid id);
     }
 }

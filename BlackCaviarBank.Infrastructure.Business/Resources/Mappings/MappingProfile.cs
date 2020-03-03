@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Infrastructure.Business.Resources.DTOs;
+using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 
 namespace BlackCaviarBank.Infrastructure.Business.Resources.Mappings
 {
