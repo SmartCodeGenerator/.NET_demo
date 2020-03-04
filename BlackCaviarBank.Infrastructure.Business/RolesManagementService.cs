@@ -1,34 +1,40 @@
 ﻿using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Business
 {
     public class RolesManagementService : IRolesManagementService
     {
-        public async Task<IEnumerable<IdentityError>> CreateRole(string roleName, RoleManager<IdentityRole> manager)
-        {
-            var result = await manager.CreateAsync(new IdentityRole(roleName));
+        private readonly RoleManager<IdentityRole> roleManager;
 
-            if (result.Succeeded)
-            {
-                return null;
-            }
-            return result.Errors;
+        public RolesManagementService(RoleManager<IdentityRole> roleManager)
+        {
+            this.roleManager = roleManager;
         }
 
-        public async Task<IEnumerable<IdentityError>> DeleteRole(string roleId, RoleManager<IdentityRole> manager)
+        public async Task CreateRole(string roleName)
         {
-            var role = await manager.FindByIdAsync(roleId);
-
-            var result = await manager.DeleteAsync(role);
-
-            if (result.Succeeded)
+            if (!await roleManager.RoleExistsAsync(roleName))
             {
-                return null;
+                await roleManager.CreateAsync(new IdentityRole(roleName));
             }
-            return result.Errors;
+        }
+
+        public async Task DeleteRole(string roleId)
+        {
+            var role = await roleManager.FindByIdAsync(roleId);
+
+            if (role != null)
+            {
+                await roleManager.DeleteAsync(role);
+            }
+        }
+
+        public IQueryable<IdentityRole> GetAppRoles()
+        {
+            return roleManager.Roles;
         }
     }
 }

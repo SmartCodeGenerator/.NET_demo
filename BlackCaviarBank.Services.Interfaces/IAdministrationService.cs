@@ -1,5 +1,4 @@
 ﻿using BlackCaviarBank.Domain.Core;
-using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,9 +8,9 @@ namespace BlackCaviarBank.Services.Interfaces
     {
         Task<IEnumerable<UserProfile>> GetUserProfiles();
         Task<UserProfile> GetUserProfileInfo(string userId);
-        Task<bool> AssignRolesToUser(UserManager<UserProfile> userManager, string userId, IList<string> roles);
-        Task<bool> BanUserProfile(UserManager<UserProfile> userManager, string userId);
-        Task<bool> UnbanUserProfile(UserManager<UserProfile> userManager, string userId);
-        Task<bool> DeleteUserProfile(UserManager<UserProfile> userManager, string userId);
+        Task AssignRolesToUser(string userId, IList<string> roles);
+        Task BanUserProfile(string userId);
+        Task UnbanUserProfile(string userId);
+        Task DeleteUserProfile(string userId);
     }
 }

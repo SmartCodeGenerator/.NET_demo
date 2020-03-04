@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IRolesManagementService
     {
-        Task<IEnumerable<IdentityError>> CreateRole(string roleName, RoleManager<IdentityRole> manager);
-        Task<IEnumerable<IdentityError>> DeleteRole(string roleId, RoleManager<IdentityRole> manager);
+        IQueryable<IdentityRole> GetAppRoles();
+        Task CreateRole(string roleName);
+        Task DeleteRole(string roleId);
     }
 }

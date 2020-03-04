@@ -12,61 +12,51 @@ namespace BlackCaviarBank.Infrastructure.Business
     public class AdministrationService : IAdministrationService
     {
         private readonly IRepository<UserProfile> repository;
+        private readonly UserManager<UserProfile> userManager;
 
-        public AdministrationService(IRepository<UserProfile> repository)
+        public AdministrationService(IRepository<UserProfile> repository, UserManager<UserProfile> userManager)
         {
             this.repository = repository;
+            this.userManager = userManager;
         }
 
-        public async Task<bool> AssignRolesToUser(UserManager<UserProfile> userManager, string userId, IList<string> roles)
+        public async Task AssignRolesToUser(string userId, IList<string> roles)
         {
             UserProfile user = await userManager.FindByIdAsync(userId);
 
-            if (user != null)
-            {
-                IList<string> userRoles = await userManager.GetRolesAsync(user);
+            IList<string> userRoles = await userManager.GetRolesAsync(user);
 
-                IEnumerable<string> addedRoles = roles.Except(userRoles);
+            IEnumerable<string> addedRoles = roles.Except(userRoles);
 
-                IEnumerable<string> removedRoles = userRoles.Except(roles);
+            IEnumerable<string> removedRoles = userRoles.Except(roles);
 
-                await userManager.AddToRolesAsync(user, addedRoles);
+            await userManager.AddToRolesAsync(user, addedRoles);
 
-                await userManager.RemoveFromRolesAsync(user, removedRoles);
-
-                return true;
-            }
-            return false;
+            await userManager.RemoveFromRolesAsync(user, removedRoles);
         }
 
-        public async Task<bool> BanUserProfile(UserManager<UserProfile> userManager, string userId)
+        public async Task BanUserProfile(string userId)
         {
             UserProfile user = await userManager.FindByIdAsync(userId);
             IList<string> userRoles = await userManager.GetRolesAsync(user);
 
-            if (user != null && !userRoles.Contains("admin"))
+            if (!userRoles.Contains("admin"))
             {
                 user.IsBanned = true;
 
                 await userManager.UpdateAsync(user);
-
-                return true;
             }
-            return false;
         }
 
-        public async Task<bool> DeleteUserProfile(UserManager<UserProfile> userManager, string userId)
+        public async Task DeleteUserProfile(string userId)
         {
             UserProfile user = await userManager.FindByIdAsync(userId);
             IList<string> userRoles = await userManager.GetRolesAsync(user);
 
-            if (user != null && !userRoles.Contains("admin"))
+            if (!userRoles.Contains("admin"))
             {
                 await userManager.DeleteAsync(user);
-
-                return true;
             }
-            return false;
         }
 
         public async Task<UserProfile> GetUserProfileInfo(string userId)
@@ -79,19 +69,16 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await repository.GetAll();
         }
 
-        public async Task<bool> UnbanUserProfile(UserManager<UserProfile> userManager, string userId)
+        public async Task UnbanUserProfile(string userId)
         {
             UserProfile user = await userManager.FindByIdAsync(userId);
 
-            if (user != null && user.IsBanned.Value)
+            if (user.IsBanned.Value)
             {
                 user.IsBanned = false;
 
                 await userManager.UpdateAsync(user);
-
-                return true;
             }
-            return false;
         }
     }
 }

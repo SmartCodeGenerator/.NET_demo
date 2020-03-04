@@ -34,9 +34,9 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories
             }
         }
 
-        public IEnumerable<TEntity> Get(Func<TEntity, bool> predicate)
+        public async Task<IEnumerable<TEntity>> Get(Func<TEntity, bool> predicate)
         {
-            return dbSet.AsNoTracking().Where(predicate).ToList();
+            return await dbSet.AsNoTracking().Where(predicate).AsQueryable().ToListAsync();
         }
 
         public virtual async Task<IEnumerable<TEntity>> GetAll()

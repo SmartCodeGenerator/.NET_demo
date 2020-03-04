@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace BlackCaviarBank.Infrastructure.Business
 {
-    public class ServiceHandlingService : IServiceHandlingService
+    public class SubscriptionService : ISubscriptionService
     {
         public List<Service> GetSubscriptions(string userId, IEnumerable<Service> services)
         {
@@ -24,7 +24,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             return subcriptions;
         }
 
-        public bool Subscribe(Service service, UserProfile subscriber, Card card, IOperationService operationService)
+        public bool Subscribe(Service service, UserProfile subscriber, Card card, ITransactionService operationService)
         {
             var rel = new SubscriptionSubscriber { Subscriber = subscriber, Subscription = service };
 

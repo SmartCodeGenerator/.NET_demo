@@ -52,11 +52,11 @@ namespace BlackCaviarBank
             services.AddScoped<ICardService, CardService>();
             services.AddScoped<INotificationService, BankingNotificationService>();
             services.AddScoped<IEmailService, EmailService>();
-            services.AddScoped<IOperationService, FinancialOperationService>();
+            services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<IGeneratorService, NumberGeneratorService>();
             services.AddScoped<IRegistrationService, RegistrationService>();
             services.AddScoped<IRolesManagementService, RolesManagementService>();
-            services.AddScoped<IServiceHandlingService, ServiceHandlingService>();
+            services.AddScoped<ISubscriptionService, SubscriptionService>();
 
             services.AddDbContext<ApplicationContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
