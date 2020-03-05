@@ -42,9 +42,9 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await repository.GetById(id);
         }
 
-        public IEnumerable<Account> GetAccounts(UserProfile currentUser)
+        public async Task<IEnumerable<Account>> GetAccounts(UserProfile currentUser)
         {
-            return repository.Get(a => a.OwnerId.Equals(currentUser.Id));
+            return await repository.Get(a => a.OwnerId.Equals(currentUser.Id));
         }
 
         public async Task UpdateAccount(Guid id, AccountDTO account)

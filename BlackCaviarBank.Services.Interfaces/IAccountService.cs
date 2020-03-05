@@ -8,7 +8,7 @@ namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IAccountService
     {
-        IEnumerable<Account> GetAccounts(UserProfile currentUser);
+        Task<IEnumerable<Account>> GetAccounts(UserProfile currentUser);
         Task<Account> GetAccount(Guid id);
         Task CreateAccount(AccountDTO account, UserProfile currentUser);
         Task UpdateAccount(Guid id, AccountDTO account);

@@ -9,6 +9,6 @@ namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IRegistrationService
     {
-        public Task<IEnumerable<IdentityError>> Register(UserManager<UserProfile> userManager, IMapper mapper, RegisterUserDTO userDTO);
+        Task<IEnumerable<IdentityError>> Register(UserManager<UserProfile> userManager, IMapper mapper, RegisterUserDTO userDTO);
     }
 }

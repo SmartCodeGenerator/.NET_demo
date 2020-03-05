@@ -53,9 +53,9 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await repository.GetById(id);
         }
 
-        public IEnumerable<Card> GetCards(UserProfile currentUser)
+        public async Task<IEnumerable<Card>> GetCards(UserProfile currentUser)
         {
-            return repository.Get(a => a.OwnerId.Equals(currentUser.Id));
+            return await repository.Get(a => a.OwnerId.Equals(currentUser.Id));
         }
 
         public async Task UpdateCard(Guid id, CardDTO card)

@@ -8,7 +8,7 @@ namespace BlackCaviarBank.Services.Interfaces
 {
     public interface ICardService
     {
-        IEnumerable<Card> GetCards(UserProfile currentUser);
+        Task<IEnumerable<Card>> GetCards(UserProfile currentUser);
         Task<Card> GetCard(Guid id);
         Task OrderCard(CardDTO card, UserProfile currentUser);
         Task UpdateCard(Guid id, CardDTO card);

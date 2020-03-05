@@ -48,7 +48,7 @@ namespace BlackCaviarBank.Controllers
                 await cardService.OrderCard(data, await userManager.GetUserAsync(User));
                 await unitOfWork.SaveChanges();
 
-                var createdCards = cardService.GetCards(await userManager.GetUserAsync(User));
+                var createdCards = await cardService.GetCards(await userManager.GetUserAsync(User));
 
                 return CreatedAtAction(nameof(GetCard), new { createdCards.Last().CardId }, createdCards.Last());
             }

@@ -39,7 +39,7 @@ namespace BlackCaviarBank
         {
             services.AddScoped<IRepository<Account>, AccountRepository>();
             services.AddScoped<IRepository<Card>, CardRepository>();
-            services.AddScoped<IRepository<Notification>, NotificatiobRepository>();
+            services.AddScoped<IRepository<Notification>, NotificationRepository>();
             services.AddScoped<IRepository<Service>, ServiceRepository>();
             services.AddScoped<IRepository<Transaction>, TransactionRepository>();
             services.AddScoped<IRepository<UserProfile>, UserProfileRepository>();

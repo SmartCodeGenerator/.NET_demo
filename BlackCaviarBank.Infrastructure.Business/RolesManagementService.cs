@@ -1,6 +1,7 @@
 ﻿using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Business
@@ -32,9 +33,9 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
         }
 
-        public IQueryable<IdentityRole> GetAppRoles()
+        public async Task<IEnumerable<IdentityRole>> GetAppRoles()
         {
-            return roleManager.Roles;
+            return await roleManager.Roles.ToListAsync();
         }
     }
 }

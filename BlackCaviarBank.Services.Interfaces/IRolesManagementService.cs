@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IRolesManagementService
     {
-        IQueryable<IdentityRole> GetAppRoles();
+        Task<IEnumerable<IdentityRole>> GetAppRoles();
         Task CreateRole(string roleName);
         Task DeleteRole(string roleId);
     }

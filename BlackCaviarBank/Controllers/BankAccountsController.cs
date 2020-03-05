@@ -49,8 +49,8 @@ namespace BlackCaviarBank.Controllers
                 await unitOfWork.SaveChanges();
 
                 return CreatedAtAction(nameof(GetAccount),
-                    new { unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name)).FirstOrDefault().AccountId },
-                    unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name)).FirstOrDefault());
+                    new { (await unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name))).FirstOrDefault().AccountId },
+                    (await unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name))).FirstOrDefault());
             }
             return Conflict(ModelState);
         }

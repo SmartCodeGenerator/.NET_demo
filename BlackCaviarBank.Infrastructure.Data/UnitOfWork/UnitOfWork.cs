@@ -1,18 +1,16 @@
-﻿using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Infrastructure.Data.Repositories;
-using BlackCaviarBank.Infrastructure.Data.Repositories.Extensions;
+﻿using BlackCaviarBank.Infrastructure.Data.Repositories.Extensions;
 using System;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
 {
-    public class UnitOfWork
+    public class UnitOfWork : IDisposable
     {
         private readonly ApplicationContext applicationContext;
 
         private AccountRepository accountRepository;
         private CardRepository cardRepository;
-        private NotificatiobRepository notificationRepository;
+        private NotificationRepository notificationRepository;
         private ServiceRepository serviceRepository;
         private TransactionRepository transactionRepository;
         private UserProfileRepository userProfileRepository;
@@ -24,7 +22,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
             this.applicationContext = applicationContext;
         }
 
-        public BaseRepository<Account> Accounts
+        public AccountRepository Accounts
         {
             get
             {
@@ -36,7 +34,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
             }
         }
 
-        public BaseRepository<Card> Cards
+        public CardRepository Cards
         {
             get
             {
@@ -48,19 +46,19 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
             }
         }
 
-        public BaseRepository<Notification> Notifications
+        public NotificationRepository Notifications
         {
             get
             {
                 if (notificationRepository == null)
                 {
-                    notificationRepository = new NotificatiobRepository(applicationContext);
+                    notificationRepository = new NotificationRepository(applicationContext);
                 }
                 return notificationRepository;
             }
         }
 
-        public BaseRepository<Service> Services
+        public ServiceRepository Services
         {
             get
             {
@@ -72,7 +70,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
             }
         }
 
-        public BaseRepository<Transaction> Transactions
+        public TransactionRepository Transactions
         {
             get
             {
@@ -84,7 +82,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
             }
         }
 
-        public BaseRepository<UserProfile> UserProfiles
+        public UserProfileRepository UserProfiles
         {
             get
             {

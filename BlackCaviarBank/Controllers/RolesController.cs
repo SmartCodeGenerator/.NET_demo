@@ -19,9 +19,9 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAllRoles() 
+        public async Task<IActionResult> GetAllRoles() 
         {
-            return Ok(rolesManagementService.GetAppRoles());
+            return Ok(await rolesManagementService.GetAppRoles());
         }
 
         [HttpPost("CreateRole")]
