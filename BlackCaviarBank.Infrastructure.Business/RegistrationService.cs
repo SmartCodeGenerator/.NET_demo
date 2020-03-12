@@ -11,7 +11,16 @@ namespace BlackCaviarBank.Infrastructure.Business
 {
     public class RegistrationService : IRegistrationService
     {
-        public async Task<IEnumerable<IdentityError>> Register(UserManager<UserProfile> userManager, IMapper mapper, RegisterUserDTO userDTO)
+        private readonly UserManager<UserProfile> userManager;
+        private readonly IMapper mapper;
+
+        public RegistrationService(UserManager<UserProfile> userManager, IMapper mapper)
+        {
+            this.userManager = userManager;
+            this.mapper = mapper;
+        }
+
+        public async Task<IEnumerable<IdentityError>> Register(RegisterUserDTO userDTO)
         {
             UserProfile user = mapper.Map<UserProfile>(userDTO);
             user.ProfileImage = !string.IsNullOrEmpty(userDTO.ProfileImageUrl) ? 

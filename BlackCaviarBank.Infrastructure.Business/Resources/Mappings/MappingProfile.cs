@@ -13,6 +13,7 @@ namespace BlackCaviarBank.Infrastructure.Business.Resources.Mappings
             CreateMap<CardDTO, Card>();
             CreateMap<ServiceDTO, Service>();
             CreateMap<TransactionDTO, Transaction>();
+            CreateMap<ProfileInfoDTO, UserProfile>();
         }
     }
 }

@@ -1,55 +1,83 @@
-﻿using BlackCaviarBank.Domain.Core;
+﻿using AutoMapper;
+using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
+using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Business
 {
     public class SubscriptionService : ISubscriptionService
     {
-        public List<Service> GetSubscriptions(string userId, IEnumerable<Service> services)
+        private readonly IRepository<Service> serviceRepository;
+        private readonly IMapper mapper;
+
+        public SubscriptionService(IRepository<Service> serviceRepository, IMapper mapper)
         {
-            var subcriptions = new List<Service>();
-
-            foreach (var service in services)
-            {
-                var relations = service.SubscriptionSubscribers.Where(ss => ss.SubscriberId == userId);
-
-                foreach (var rel in relations)
-                {
-                    subcriptions.Add(rel.Subscription);
-                }
-            }
-
-            return subcriptions;
+            this.serviceRepository = serviceRepository;
+            this.mapper = mapper;
         }
 
-        public bool Subscribe(Service service, UserProfile subscriber, Card card, ITransactionService operationService)
+        public async Task<Service> CreateService(ServiceDTO service)
         {
-            var rel = new SubscriptionSubscriber { Subscriber = subscriber, Subscription = service };
-
-            if (operationService.PayForSubscription(card, service))
-            {
-                subscriber.SubscriptionSubscribers.Add(rel);
-                service.SubscriptionSubscribers.Add(rel);
-
-                return true;
-            }
-            return false;
+            var subscription = mapper.Map<Service>(service);
+            await serviceRepository.Create(subscription);
+            return subscription;
         }
 
-        public bool Unsubscribe(Service service, UserProfile user)
+        public async Task<Service> GetService(Guid id)
         {
-            var rel = user.SubscriptionSubscribers.First(ss => ss.SubscriptionId == service.ServiceId && ss.SubscriberId.Equals(user.Id));
+            return await serviceRepository.GetById(id);
+        }
 
-            if (rel != null)
+        public async Task<IEnumerable<Service>> GetServices()
+        {
+            return await serviceRepository.GetAll();
+        }
+
+        public async Task<IEnumerable<Service>> GetUserSubscriptions(UserProfile user)
+        {
+            return await serviceRepository.Get(s => s.SubscriptionSubscribers.Count(ss => ss.SubscriberId.Equals(user.Id)) > 0);
+        }
+
+        public void RemoveService(Guid id)
+        {
+            serviceRepository.Delete(id);
+        }
+
+        public async Task SubscribeOnService(UserProfile subscriber, Card card, Guid serviceId)
+        {
+            var service = await serviceRepository.GetById(serviceId);
+            if (!card.IsBlocked && card.Balance >= service.Price)
             {
-                service.SubscriptionSubscribers.Remove(rel);
-                user.SubscriptionSubscribers.Remove(rel);
-
-                return true;
+                var link = new SubscriptionSubscriber { Subscriber = subscriber, Subscription = service };
+                subscriber.SubscriptionSubscribers.Add(link);
+                service.SubscriptionSubscribers.Add(link);
+                card.Balance -= service.Price;
+                serviceRepository.Update(service);
             }
-            return false;
+        }
+
+        public async Task UnsubscribeFromService(UserProfile subscriber, Guid id)
+        {
+            var service = await serviceRepository.GetById(id);
+            var link = service.SubscriptionSubscribers.First(ss => ss.SubscriberId.Equals(subscriber.Id));
+            if (link != null)
+            {
+                subscriber.SubscriptionSubscribers.Remove(link);
+                service.SubscriptionSubscribers.Remove(link);
+                serviceRepository.Update(service);
+            }
+        }
+
+        public async Task UpdateService(ServiceDTO service, Guid id)
+        {
+            var record = await serviceRepository.GetById(id);
+            mapper.Map(service, record);
+            serviceRepository.Update(record);
         }
     }
 }

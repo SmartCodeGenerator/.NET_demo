@@ -14,7 +14,14 @@ namespace BlackCaviarBank.Infrastructure.Business
 {
     public class AuthenticationService : IAuthenticationService
     {
-        public async Task<string> Authenticate(UserManager<UserProfile> userManager, LoginUserDTO userDTO)
+        private readonly UserManager<UserProfile> userManager;
+
+        public AuthenticationService(UserManager<UserProfile> userManager)
+        {
+            this.userManager = userManager;
+        }
+
+        public async Task<string> Authenticate(LoginUserDTO userDTO)
         {
             UserProfile user = await userManager.FindByNameAsync(userDTO.UserName);
 

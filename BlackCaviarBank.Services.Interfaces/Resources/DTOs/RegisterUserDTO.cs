@@ -7,25 +7,19 @@ namespace BlackCaviarBank.Services.Interfaces.Resources.DTOs
         [Required]
         public string UserName { get; set; }
 
-        [Required]
-        [EmailAddress]
+        [Required, EmailAddress]
         public string Email { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
+        [Required, DataType(DataType.Password)]
         public string Password { get; set; }
 
-        [Required]
-        [Compare("Password", ErrorMessage = "Passwords doesn't match each other")]
-        [DataType(DataType.Password)]
+        [Required, DataType(DataType.Password), Compare("Password", ErrorMessage = "Passwords doesn't match each other")]
         public string PasswordConfirm { get; set; }
 
-        [Required]
-        [StringLength(20)]
+        [Required, StringLength(20)]
         public string FirstName { get; set; }
 
-        [Required]
-        [StringLength(20)]
+        [Required, StringLength(20)]
         public string LastName { get; set; }
 
         [DataType(DataType.ImageUrl)]

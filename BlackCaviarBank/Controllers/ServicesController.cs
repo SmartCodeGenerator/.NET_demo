@@ -1,7 +1,5 @@
-﻿using AutoMapper;
-using BlackCaviarBank.Domain.Core;
+﻿using BlackCaviarBank.Domain.Core;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
-using BlackCaviarBank.Infrastructure.Data.UnitOfWork.Implementations;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -20,40 +18,34 @@ namespace BlackCaviarBank.Controllers
     {
         private readonly UserManager<UserProfile> userManager;
         private readonly UnitOfWork unitOfWork;
-        private readonly IMapper mapper;
-        private readonly ITransactionService operationService;
-        private readonly ISubscriptionService serviceHandlingService;
+        private readonly ISubscriptionService subscriptionService;
 
-        public ServicesController(UserManager<UserProfile> userManager, IUnitOfWork unitOfWork, IMapper mapper, ITransactionService operationService, ISubscriptionService serviceHandlingService)
+        public ServicesController(UserManager<UserProfile> userManager, UnitOfWork unitOfWork, ISubscriptionService subscriptionService)
         {
             this.userManager = userManager;
-            this.unitOfWork = (UnitOfWork)unitOfWork;
-            this.mapper = mapper;
-            this.operationService = operationService;
-            this.serviceHandlingService = serviceHandlingService;
+            this.unitOfWork = unitOfWork;
+            this.subscriptionService = subscriptionService;
         }
 
         [Authorize]
         [HttpGet]
-        public IActionResult GetAllServices()
+        public async Task<IActionResult> GetAllServices()
         {
-            return Ok(unitOfWork.Services.GetAll().ToList());
+            return Ok(await subscriptionService.GetServices());
         }
 
         [Authorize]
         [HttpGet("{id}")]
-        public IActionResult GetService(Guid id)
+        public async Task<IActionResult> GetService(Guid id)
         {
-            return Ok(unitOfWork.Services.GetById(id));
+            return Ok(await subscriptionService.GetService(id));
         }
 
         [Authorize]
         [HttpGet("UserSubscriptions")]
         public async Task<IActionResult> GetUserSubscriptions()
         {
-            var user = await userManager.GetUserAsync(User);
-
-            return Ok(serviceHandlingService.GetSubscriptions(user.Id, unitOfWork.Services.GetAll()));
+            return Ok(await subscriptionService.GetUserSubscriptions(await userManager.GetUserAsync(User)));
         }
 
         [Authorize(Roles = "admin")]
@@ -62,12 +54,10 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var service = mapper.Map<Service>(data);
-
-                unitOfWork.Services.Create(service);
+                var result = await subscriptionService.CreateService(data);
                 await unitOfWork.SaveChanges();
 
-                return CreatedAtAction(nameof(GetService), new { id = service.ServiceId }, service);
+                return CreatedAtAction(nameof(GetService), new { id = result.ServiceId }, result);
             }
             return Conflict(ModelState);
         }
@@ -78,11 +68,7 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var service = unitOfWork.Services.GetById(id);
-
-                mapper.Map(data, service);
-
-                unitOfWork.Services.Update(service);
+                await subscriptionService.UpdateService(data, id);
                 await unitOfWork.SaveChanges();
 
                 return NoContent();
@@ -94,7 +80,7 @@ namespace BlackCaviarBank.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> RemoveService(Guid id)
         {
-            unitOfWork.Services.Delete(id);
+            subscriptionService.RemoveService(id);
             await unitOfWork.SaveChanges();
 
             return NoContent();
@@ -107,14 +93,11 @@ namespace BlackCaviarBank.Controllers
             if (ModelState.IsValid)
             {
                 var user = await userManager.GetUserAsync(User);
+                await subscriptionService.SubscribeOnService(user, (await unitOfWork.Cards.Get(c => c.CardNumber.Equals(data.CardNumber))).First(), data.ServiceId);
+                unitOfWork.UserProfiles.Update(user);
+                await unitOfWork.SaveChanges();
 
-                if (serviceHandlingService.Subscribe(unitOfWork.Services.GetById(data.ServiceId), user,
-                    unitOfWork.Cards.Get(c=>c.CardNumber.Equals(data.CardNumber)).First(), operationService))
-                {
-                    await unitOfWork.SaveChanges();
-
-                    return NoContent();
-                }
+                return NoContent();
             }
             return Conflict(ModelState);
         }
@@ -124,14 +107,11 @@ namespace BlackCaviarBank.Controllers
         public async Task<IActionResult> UnsubscribeFromService(Guid id)
         {
             var user = await userManager.GetUserAsync(User);
+            await subscriptionService.UnsubscribeFromService(user, id);
+            unitOfWork.UserProfiles.Update(user);
+            await unitOfWork.SaveChanges();
 
-            if (serviceHandlingService.Unsubscribe(unitOfWork.Services.GetById(id), user))
-            {
-                await unitOfWork.SaveChanges();
-
-                return NoContent();
-            }
-            return BadRequest(id);
+            return NoContent();
         }
     }
 }

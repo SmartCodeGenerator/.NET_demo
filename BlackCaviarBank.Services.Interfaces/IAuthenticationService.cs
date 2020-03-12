@@ -1,12 +1,10 @@
-﻿using BlackCaviarBank.Domain.Core;
-using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
-using Microsoft.AspNetCore.Identity;
+﻿using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IAuthenticationService
     {
-        Task<string> Authenticate(UserManager<UserProfile> userManager, LoginUserDTO userDTO);
+        Task<string> Authenticate(LoginUserDTO userDTO);
     }
 }

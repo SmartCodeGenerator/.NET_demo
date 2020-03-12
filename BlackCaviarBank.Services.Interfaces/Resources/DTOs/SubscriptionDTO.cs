@@ -5,8 +5,7 @@ namespace BlackCaviarBank.Services.Interfaces.Resources.DTOs
 {
     public class SubscriptionDTO
     {
-        [Required]
-        [StringLength(16)]
+        [Required, StringLength(16)]
         public string CardNumber { get; set; }
 
         [Required]

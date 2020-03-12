@@ -29,9 +29,9 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await notificationRepository.GetById(id);
         }
 
-        public IEnumerable<Notification> GetNotificationsForUser(UserProfile user)
+        public async Task<IEnumerable<Notification>> GetNotificationsForUser(UserProfile user)
         {
-            return notificationRepository.Get(n => n.ReceiverId == user.Id);
+            return await notificationRepository.Get(n => n.ReceiverId == user.Id);
         }
 
         public async Task<IEnumerable<Notification>> GetNotifications()
@@ -53,6 +53,9 @@ namespace BlackCaviarBank.Infrastructure.Business
                 notification.Time = DateTime.UtcNow;
                 notification.ReceiverId = pair.SubscriberId;
 
+                pair.Subscriber.Notifications.Add(notification);
+                service.Notifications.Add(notification);
+
                 await notificationRepository.Create(notification);
             }
         }
@@ -66,7 +69,9 @@ namespace BlackCaviarBank.Infrastructure.Business
             notification.Time = DateTime.UtcNow;
 
             notification.Sender = service;
+            service.Notifications.Add(notification);
             notification.Receiver = user;
+            user.Notifications.Add(notification);
 
             await notificationRepository.Create(notification);
 

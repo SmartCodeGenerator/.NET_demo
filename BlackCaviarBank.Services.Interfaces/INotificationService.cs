@@ -10,7 +10,7 @@ namespace BlackCaviarBank.Services.Interfaces
     {
         Task<IEnumerable<Notification>> GetNotifications();
         Task<Notification> GetNotificationById(Guid id);
-        IEnumerable<Notification> GetNotificationsForUser(UserProfile user);
+        Task<IEnumerable<Notification>> GetNotificationsForUser(UserProfile user);
         Task<Notification> NotifyUser(UserProfile user, UserNotificationDTO userNotification);
         Task NotifySubscribers(SubscribersNotificationDTO subscribersNotification);
         void DeleteNotification(Guid id);

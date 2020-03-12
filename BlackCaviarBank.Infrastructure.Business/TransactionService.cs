@@ -50,7 +50,7 @@ namespace BlackCaviarBank.Infrastructure.Business
 
             if (payingCard != null && receivingCard != null)
             {
-                if (payingCard.Balance > transaction.Amount)
+                if (!payingCard.IsBlocked && payingCard.Balance > transaction.Amount)
                 {
                     payingCard.Balance -= transaction.Amount;
                     receivingCard.Balance += transaction.Amount;
@@ -61,7 +61,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
             else if (payingCard != null && receivingAccount != null)
             {
-                if (payingCard.Balance > transaction.Amount)
+                if (!payingCard.IsBlocked && payingCard.Balance > transaction.Amount)
                 {
                     payingCard.Balance -= transaction.Amount;
                     receivingAccount.Balance += transaction.Amount;
@@ -72,7 +72,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
             else if (payingAccount != null && receivingCard != null)
             {
-                if (payingAccount.Balance > transaction.Amount)
+                if (!payingAccount.IsBlocked && payingAccount.Balance > transaction.Amount)
                 {
                     payingAccount.Balance -= transaction.Amount;
                     receivingCard.Balance += transaction.Amount;
@@ -83,7 +83,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
             else if (payingAccount != null && receivingAccount != null)
             {
-                if (payingAccount.Balance > transaction.Amount)
+                if (!payingAccount.IsBlocked && payingAccount.Balance > transaction.Amount)
                 {
                     payingAccount.Balance -= transaction.Amount;
                     receivingAccount.Balance += transaction.Amount;

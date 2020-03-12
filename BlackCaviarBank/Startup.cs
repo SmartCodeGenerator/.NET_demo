@@ -57,6 +57,7 @@ namespace BlackCaviarBank
             services.AddScoped<IRegistrationService, RegistrationService>();
             services.AddScoped<IRolesManagementService, RolesManagementService>();
             services.AddScoped<ISubscriptionService, SubscriptionService>();
+            services.AddScoped<IPersonalCabinetService, PersonalCabinetService>();
 
             services.AddDbContext<ApplicationContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));

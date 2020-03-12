@@ -1,6 +1,7 @@
 ﻿using BlackCaviarBank.Domain.Core;
 using Microsoft.AspNetCore.Identity;
 using System.Threading.Tasks;
+using static System.IO.File;
 
 namespace BlackCaviarBank.Infrastructure.Data.DbSeeders
 {
@@ -19,7 +20,7 @@ namespace BlackCaviarBank.Infrastructure.Data.DbSeeders
             }
             if (await userManager.FindByNameAsync("admin1") == null)
             {
-                admin.ProfileImage = System.IO.File.ReadAllBytes("./MyStaticFiles/images/user_icon.svg");
+                admin.ProfileImage = ReadAllBytes("./MyStaticFiles/images/user_icon.svg");
                 var result = await userManager.CreateAsync(admin, "admin11");
                 if (result.Succeeded)
                 {

@@ -44,7 +44,7 @@ namespace BlackCaviarBank.Controllers
         [HttpGet("ForCurrentUser")]
         public async Task<IActionResult> GetAllForCurrentUser()
         {
-            return Ok(notificationService.GetNotificationsForUser(await userManager.GetUserAsync(User)));
+            return Ok(await notificationService.GetNotificationsForUser(await userManager.GetUserAsync(User)));
         }
 
         [Authorize(Roles = "admin")]
