@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
 {
-    [Authorize]
     [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
@@ -27,18 +26,21 @@ namespace BlackCaviarBank.Controllers
             this.transactionService = transactionService;
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetTransactions()
         {
             return Ok(await transactionService.GetTransactionsForCurrentUser(await userManager.GetUserAsync(User)));
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTransaction(Guid id)
         {
             return Ok(await transactionService.GetTransaction(id));
         }
 
+        [Authorize]
         [HttpPost("MakeTransaction")]
         public async Task<IActionResult> MakeTransaction(TransactionDTO data)
         {
@@ -52,6 +54,7 @@ namespace BlackCaviarBank.Controllers
             return Conflict(ModelState);
         }
 
+        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> RollbackTransaction(Guid id)
         {
