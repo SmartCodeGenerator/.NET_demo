@@ -57,7 +57,14 @@ namespace BlackCaviarBank.Controllers
                 var result = await subscriptionService.CreateService(data);
                 await unitOfWork.SaveChanges();
 
-                return CreatedAtAction(nameof(GetService), new { id = result.ServiceId }, result);
+                if (result != null)
+                {
+                    return CreatedAtAction(nameof(GetService), new { id = result.ServiceId }, result);
+                }
+                else
+                {
+                    return BadRequest(data);
+                }
             }
             return Conflict(ModelState);
         }

@@ -49,7 +49,14 @@ namespace BlackCaviarBank.Controllers
                 var result = await transactionService.MakeTransaction(data, await userManager.GetUserAsync(User));
                 await unitOfWork.SaveChanges();
 
-                return CreatedAtAction(nameof(GetTransaction), new { result.TransactionId }, result);
+                if (result != null)
+                {
+                    return CreatedAtAction(nameof(GetTransaction), new { result.TransactionId }, result);
+                }
+                else
+                {
+                    return BadRequest(data);
+                }
             }
             return Conflict(ModelState);
         }
@@ -58,14 +65,10 @@ namespace BlackCaviarBank.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> RollbackTransaction(Guid id)
         {
-            if (ModelState.IsValid)
-            {
-                await transactionService.RollbackTransaction(id);
-                await unitOfWork.SaveChanges();
+            await transactionService.RollbackTransaction(id);
+            await unitOfWork.SaveChanges();
 
-                return NoContent();
-            }
-            return Conflict(ModelState);
+            return NoContent();
         }
     }
 }

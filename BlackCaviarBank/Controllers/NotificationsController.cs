@@ -55,8 +55,15 @@ namespace BlackCaviarBank.Controllers
             {
                 var result = await notificationService.NotifyUser(await userManager.GetUserAsync(User), data);
                 await unitOfWork.SaveChanges();
-                
-                return CreatedAtAction(nameof(GetNotification), new { id = result.NotificationId }, result);
+
+                if (result != null)
+                {
+                    return CreatedAtAction(nameof(GetNotification), new { id = result.NotificationId }, result);
+                }
+                else
+                {
+                    return BadRequest(data);
+                }
             }
             return Conflict(ModelState);
         }
