@@ -1,4 +1,5 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
@@ -29,14 +30,14 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await notificationRepository.GetById(id);
         }
 
-        public async Task<IEnumerable<Notification>> GetNotificationsForUser(UserProfile user)
+        public async Task<PagedList<Notification>> GetNotificationsForUser(UserProfile user, NotificationParams notificationParams)
         {
-            return await notificationRepository.Get(n => n.ReceiverId == user.Id);
+            return await notificationRepository.Get(n => n.ReceiverId == user.Id, notificationParams);
         }
 
-        public async Task<IEnumerable<Notification>> GetNotifications()
+        public async Task<PagedList<Notification>> GetNotifications(NotificationParams notificationParams)
         {
-            return await notificationRepository.GetAll();
+            return await notificationRepository.GetAll(notificationParams);
         }
 
         public async Task NotifySubscribers(SubscribersNotificationDTO subscribersNotification)

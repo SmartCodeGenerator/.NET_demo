@@ -1,10 +1,12 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,9 +31,23 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAccounts()
+        public async Task<IActionResult> GetAccounts([FromQuery] BankAccountParams bankAccountParams)
         {
-            return Ok(accountService.GetAccounts(await userManager.GetUserAsync(User)));
+            var result = await accountService.GetAccounts(await userManager.GetUserAsync(User), bankAccountParams);
+
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]

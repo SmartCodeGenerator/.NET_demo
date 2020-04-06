@@ -1,10 +1,12 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 
@@ -28,9 +30,23 @@ namespace BlackCaviarBank.Controllers
 
         [Authorize(Roles = "admin")]
         [HttpGet]
-        public async Task<IActionResult> GetAllNotifications()
+        public async Task<IActionResult> GetAllNotifications([FromQuery] NotificationParams notificationParams)
         {
-            return Ok(await notificationService.GetNotifications());
+            var result = await notificationService.GetNotifications(notificationParams);
+
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            return Ok(result);
         }
 
         [Authorize(Roles = "admin")]
@@ -42,9 +58,23 @@ namespace BlackCaviarBank.Controllers
 
         [Authorize]
         [HttpGet("ForCurrentUser")]
-        public async Task<IActionResult> GetAllForCurrentUser()
+        public async Task<IActionResult> GetAllForCurrentUser([FromQuery] NotificationParams notificationParams)
         {
-            return Ok(await notificationService.GetNotificationsForUser(await userManager.GetUserAsync(User)));
+            var result = await notificationService.GetNotificationsForUser(await userManager.GetUserAsync(User), notificationParams);
+
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            return Ok(result);
         }
 
         [Authorize(Roles = "admin")]

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
@@ -33,14 +34,14 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await serviceRepository.GetById(id);
         }
 
-        public async Task<IEnumerable<Service>> GetServices()
+        public async Task<PagedList<Service>> GetServices(ServiceParams serviceParams)
         {
-            return await serviceRepository.GetAll();
+            return await serviceRepository.GetAll(serviceParams);
         }
 
-        public async Task<IEnumerable<Service>> GetUserSubscriptions(UserProfile user)
+        public async Task<PagedList<Service>> GetUserSubscriptions(UserProfile user, ServiceParams serviceParams)
         {
-            return await serviceRepository.Get(s => s.SubscriptionSubscribers.Count(ss => ss.SubscriberId.Equals(user.Id)) > 0);
+            return await serviceRepository.Get(s => s.SubscriptionSubscribers.Count(ss => ss.SubscriberId.Equals(user.Id)) > 0, serviceParams);
         }
 
         public void RemoveService(Guid id)

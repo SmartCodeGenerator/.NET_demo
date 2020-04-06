@@ -1,7 +1,7 @@
-﻿using BlackCaviarBank.Domain.Interfaces;
+﻿using BlackCaviarBank.Domain.Core.QueryParams;
+using BlackCaviarBank.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,16 +34,18 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<IEnumerable<TEntity>> Get(Func<TEntity, bool> predicate)
+        public async Task<PagedList<TEntity>> Get(Func<TEntity, bool> predicate, QueryParams queryParams = null)
         {
-            return await dbSet.AsNoTracking().Where(predicate).AsQueryable().ToListAsync();
+            return queryParams != null ? await PagedList<TEntity>.ToPagedList(dbSet.AsNoTracking().Where(predicate).AsQueryable(), queryParams.PageNumber, queryParams.PageSize) :
+                await PagedList<TEntity>.AsSimpleData(dbSet.AsNoTracking().Where(predicate).AsQueryable());
         }
 
-        public virtual async Task<IEnumerable<TEntity>> GetAll()
+        public async Task<PagedList<TEntity>> GetAll(QueryParams queryParams = null)
         {
             dbSet.Load();
 
-            return await dbSet.AsNoTracking().ToListAsync();
+            return queryParams != null ? await PagedList<TEntity>.ToPagedList(dbSet.AsNoTracking().AsQueryable(), queryParams.PageNumber, queryParams.PageSize) :
+                await PagedList<TEntity>.AsSimpleData(dbSet.AsNoTracking().AsQueryable());
         }
 
         public async Task<TEntity> GetById(Guid id)

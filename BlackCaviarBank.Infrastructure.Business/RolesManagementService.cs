@@ -1,7 +1,7 @@
-﻿using BlackCaviarBank.Services.Interfaces;
+﻿using BlackCaviarBank.Domain.Core.QueryParams;
+using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Business
@@ -33,9 +33,10 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
         }
 
-        public async Task<IEnumerable<IdentityRole>> GetAppRoles()
+        public async Task<PagedList<IdentityRole>> GetAppRoles(RoleParams roleParams)
         {
-            return await roleManager.Roles.ToListAsync();
+            var roles = await roleManager.Roles.ToListAsync();
+            return new PagedList<IdentityRole>(roles, roles.Count, roleParams.PageNumber, roleParams.PageSize);
         }
     }
 }

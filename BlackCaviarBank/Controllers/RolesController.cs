@@ -1,6 +1,8 @@
-﻿using BlackCaviarBank.Services.Interfaces;
+﻿using BlackCaviarBank.Domain.Core.QueryParams;
+using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -19,9 +21,23 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllRoles() 
+        public async Task<IActionResult> GetAllRoles([FromQuery] RoleParams roleParams) 
         {
-            return Ok(await rolesManagementService.GetAppRoles());
+            var result = await rolesManagementService.GetAppRoles(roleParams);
+
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            return Ok(result);
         }
 
         [HttpPost("CreateRole")]

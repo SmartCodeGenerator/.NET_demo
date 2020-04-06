@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,9 +30,9 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await transactionRepository.GetById(id);
         }
 
-        public async Task<IEnumerable<Transaction>> GetTransactionsForCurrentUser(UserProfile user)
+        public async Task<PagedList<Transaction>> GetTransactionsForCurrentUser(UserProfile user, TransactionParams transactionParams)
         {
-            return await transactionRepository.Get(t => t.PayerId.Equals(user.Id));
+            return await transactionRepository.Get(t => t.PayerId.Equals(user.Id), transactionParams);
         }
 
         public async Task<Transaction> MakeTransaction(TransactionDTO transaction, UserProfile payer)

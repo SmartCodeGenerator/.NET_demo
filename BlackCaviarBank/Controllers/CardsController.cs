@@ -1,12 +1,13 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Infrastructure.Data.UnitOfWork;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -29,9 +30,23 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCards()
+        public async Task<IActionResult> GetCards([FromQuery] CardParams cardParams)
         {
-            return Ok(cardService.GetCards(await userManager.GetUserAsync(User)));
+            var result = await cardService.GetCards(await userManager.GetUserAsync(User), cardParams);
+
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
@@ -45,12 +60,10 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                await cardService.OrderCard(data, await userManager.GetUserAsync(User));
+                var result = await cardService.OrderCard(data, await userManager.GetUserAsync(User));
                 await unitOfWork.SaveChanges();
 
-                var createdCards = await cardService.GetCards(await userManager.GetUserAsync(User));
-
-                return CreatedAtAction(nameof(GetCard), new { createdCards.Last().CardId }, createdCards.Last());
+                return CreatedAtAction(nameof(GetCard), new { result.CardId }, result);
             }
             return Conflict(ModelState);
         }

@@ -1,4 +1,5 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -64,9 +65,9 @@ namespace BlackCaviarBank.Infrastructure.Business
             return await repository.GetById(Guid.Parse(userId));
         }
 
-        public async Task<IEnumerable<UserProfile>> GetUserProfiles()
+        public async Task<PagedList<UserProfile>> GetUserProfiles(UserProfileParams userProfileParams)
         {
-            return await repository.GetAll();
+            return await repository.GetAll(userProfileParams);
         }
 
         public async Task UnbanUserProfile(string userId)

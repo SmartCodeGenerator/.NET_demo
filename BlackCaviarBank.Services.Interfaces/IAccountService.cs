@@ -1,14 +1,14 @@
 ﻿using BlackCaviarBank.Domain.Core;
+using BlackCaviarBank.Domain.Core.QueryParams;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Services.Interfaces
 {
     public interface IAccountService
     {
-        Task<IEnumerable<Account>> GetAccounts(UserProfile currentUser);
+        Task<PagedList<Account>> GetAccounts(UserProfile currentUser, BankAccountParams bankAccountParams);
         Task<Account> GetAccount(Guid id);
         Task CreateAccount(AccountDTO account, UserProfile currentUser);
         Task UpdateAccount(Guid id, AccountDTO account);

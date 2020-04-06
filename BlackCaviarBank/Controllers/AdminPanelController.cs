@@ -1,6 +1,8 @@
-﻿using BlackCaviarBank.Services.Interfaces;
+﻿using BlackCaviarBank.Domain.Core.QueryParams;
+using BlackCaviarBank.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -20,9 +22,23 @@ namespace BlackCaviarBank.Controllers
         }
 
         [HttpGet("UserProfiles")]
-        public async Task<IActionResult> GetUserProfiles()
+        public async Task<IActionResult> GetUserProfiles([FromQuery] UserProfileParams userProfileParams)
         {
-            return Ok(await administrationService.GetUserProfiles());
+            var result = await administrationService.GetUserProfiles(userProfileParams);
+
+            var metadata = new
+            {
+                result.TotalCount,
+                result.PageSize,
+                result.CurrentPage,
+                result.TotalPages,
+                result.HasNext,
+                result.HasPrevious
+            };
+
+            Response.Headers.Add("X-Pagination", JsonConvert.SerializeObject(metadata));
+
+            return Ok(result);
         }
 
         [HttpGet("UserProfiles/{id}")]
