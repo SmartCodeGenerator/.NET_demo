@@ -33,9 +33,14 @@ namespace BlackCaviarBank.Domain.Core.QueryParams
 
         public async static Task<PagedList<TEntity>> ToPagedList(IQueryable<TEntity> source, int pageNumber, int pageSize)
         {
-            var list = await source.ToListAsync();
-            var count = list.Count();
-            var items = list.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            int count = 0;
+            List<TEntity> items = new List<TEntity>();
+            if (source != null)
+            {
+                List<TEntity> list = await source.ToListAsync();
+                count = list.Count();
+                items = list.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+            }
 
             return new PagedList<TEntity>(items, count, pageNumber, pageSize);
         }

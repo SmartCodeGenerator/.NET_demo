@@ -4,7 +4,6 @@ using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Infrastructure.Business

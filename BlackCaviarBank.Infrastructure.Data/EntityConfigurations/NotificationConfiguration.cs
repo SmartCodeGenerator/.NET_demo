@@ -13,7 +13,7 @@ namespace BlackCaviarBank.Infrastructure.Data.EntityConfigurations
             builder.Property(n => n.Time).HasDefaultValue(DateTime.Now).IsRequired();
 
             builder.HasOne(n => n.Receiver).WithMany(up => up.Notifications).HasForeignKey(n => n.ReceiverId).OnDelete(DeleteBehavior.Cascade);
-            builder.HasOne(n => n.Sender).WithMany(serv => serv.Notifications).HasForeignKey(n => n.SenderId).OnDelete(DeleteBehavior.SetNull);
+            builder.HasOne(n => n.Sender).WithMany(serv => serv.Notifications).HasForeignKey(n => n.SenderId).OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

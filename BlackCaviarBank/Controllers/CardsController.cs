@@ -6,6 +6,7 @@ using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace BlackCaviarBank.Controllers
         [HttpGet]
         public async Task<IActionResult> GetCards([FromQuery] CardParams cardParams)
         {
-            var result = await cardService.GetCards(await userManager.GetUserAsync(User), cardParams);
+            var result = await cardService.GetCards(await userManager.FindByNameAsync(User.Identity.Name), cardParams);
 
             var metadata = new
             {
@@ -60,10 +61,22 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await cardService.OrderCard(data, await userManager.GetUserAsync(User));
+                var result = await cardService.OrderCard(data, await userManager.FindByNameAsync(User.Identity.Name));
                 await unitOfWork.SaveChanges();
 
-                return CreatedAtAction(nameof(GetCard), new { result.CardId }, result);
+                return CreatedAtAction(nameof(GetCard),
+                    new { id = result.CardId },
+                    new
+                    {
+                        cardId = result.CardId,
+                        cardNumber = result.CardNumber,
+                        expirationDate = result.ExpirationDate,
+                        paymentSystem = result.PaymentSystem,
+                        cvv2 = result.CVV2,
+                        balance = result.Balance,
+                        isBlocked = result.IsBlocked,
+                        ownerId = result.OwnerId
+                    });
             }
             return Conflict(ModelState);
         }

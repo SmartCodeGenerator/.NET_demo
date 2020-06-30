@@ -44,7 +44,13 @@ namespace BlackCaviarBank.Controllers
                 IEnumerable<IdentityError> errors = await registrationService.Register(userData);
                 if (errors == null)
                 {
-                    return RedirectToAction(nameof(SignIn), new { userData = new LoginUserDTO { UserName = userData.UserName, Password = userData.Password } });
+                    var loginData = new LoginUserDTO { UserName = userData.UserName, Password = userData.Password };
+                    string accessToken = await authenticationService.Authenticate(loginData);
+                    if (string.IsNullOrEmpty(accessToken))
+                    {
+                        return BadRequest("Invalid username or password");
+                    }
+                    return Ok(accessToken);
                 }
                 foreach(var error in errors)
                 {

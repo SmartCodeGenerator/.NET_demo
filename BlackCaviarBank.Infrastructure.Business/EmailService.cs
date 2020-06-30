@@ -1,7 +1,7 @@
-﻿using MimeKit;
-using MailKit.Net.Smtp;
+﻿using BlackCaviarBank.Services.Interfaces;
+using MimeKit;
+using System.Net.Mail;
 using System.Threading.Tasks;
-using BlackCaviarBank.Services.Interfaces;
 
 namespace BlackCaviarBank.Infrastructure.Business
 {
@@ -9,9 +9,17 @@ namespace BlackCaviarBank.Infrastructure.Business
     {
         public async Task SendEmailAsync(string email, string subject, string message)
         {
+            _ = new MailAddress(email);
+
+            if (string.IsNullOrEmpty(subject) && string.IsNullOrEmpty(message))
+            {
+                subject = "BCB notification";
+                message = "This message is sent for unmanaged purpose";
+            }
+
             var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("Website administration", "alex.jeffrey.student@gmail.com"));
+            emailMessage.From.Add(new MailboxAddress("Black Caviar Bank administration", "alexjfr112@gmail.com"));
             emailMessage.To.Add(new MailboxAddress("", email));
             emailMessage.Subject = subject;
             emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
@@ -19,9 +27,9 @@ namespace BlackCaviarBank.Infrastructure.Business
                 Text = message
             };
 
-            using var client = new SmtpClient();
+            using var client = new MailKit.Net.Smtp.SmtpClient();
             await client.ConnectAsync("smtp.gmail.com", 465, true);
-            await client.AuthenticateAsync("alex.jeffrey.student@gmail.com", "greedIsgood245");
+            await client.AuthenticateAsync("alexjfr112@gmail.com", "fakerfaker24");
             await client.SendAsync(emailMessage);
 
             await client.DisconnectAsync(true);

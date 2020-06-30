@@ -44,7 +44,7 @@ namespace BlackCaviarBank
             services.AddScoped<IRepository<Transaction>, TransactionRepository>();
             services.AddScoped<IRepository<UserProfile>, UserProfileRepository>();
 
-            services.AddSingleton<UnitOfWork>();
+            services.AddScoped<UnitOfWork>();
 
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IAdministrationService, AdministrationService>();
@@ -73,25 +73,28 @@ namespace BlackCaviarBank
                 .AddEntityFrameworkStores<ApplicationContext>()
                 .AddDefaultTokenProviders();
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(options =>
-                    {
-                        options.RequireHttpsMetadata = true;
-                        options.TokenValidationParameters = new TokenValidationParameters()
-                        {
-                            ValidateIssuer = true,
-                            ValidIssuer = AuthOptions.ISSUER,
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = true;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = AuthOptions.ISSUER,
 
-                            ValidateAudience = true,
-                            ValidAudience = AuthOptions.AUDIENCE,
+                    ValidateAudience = true,
+                    ValidAudience = AuthOptions.AUDIENCE,
 
-                            ValidateLifetime = true,
+                    ValidateLifetime = true,
 
-                            ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey()
-                        };
-                    }
-                );
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey()
+                };
+            });
 
             services.AddControllers()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
@@ -155,7 +158,7 @@ namespace BlackCaviarBank
 
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Black Caviar V1");
+                c.SwaggerEndpoint("v2/swagger.json", "BlackCaviarBank API");
             });
 
             app.UseCors(builder =>
@@ -170,6 +173,7 @@ namespace BlackCaviarBank
             app.UseRouting();
 
             app.UseAuthentication();
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

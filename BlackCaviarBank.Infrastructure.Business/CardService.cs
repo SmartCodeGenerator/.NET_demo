@@ -63,8 +63,6 @@ namespace BlackCaviarBank.Infrastructure.Business
         {
             var record = await repository.GetById(id);
             record = mapper.Map(card, record);
-
-            repository.Update(record);
         }
     }
 }

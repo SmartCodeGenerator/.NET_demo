@@ -5,6 +5,7 @@ using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -32,7 +33,17 @@ namespace BlackCaviarBank.Infrastructure.Business
 
         public async Task<PagedList<Transaction>> GetTransactionsForCurrentUser(UserProfile user, TransactionParams transactionParams)
         {
-            return await transactionRepository.Get(t => t.PayerId.Equals(user.Id), transactionParams);
+            var result = await transactionRepository.GetAll();
+            var items = new List<Transaction>();
+            int count = 0;
+            if (result != null)
+            {
+                var list = result.Where(t => t.PayerId.Equals(user.Id)).ToList();
+                count = list.Count();
+                items = list.Skip((transactionParams.PageNumber - 1) * transactionParams.PageSize).Take(transactionParams.PageSize).ToList();
+            }
+
+            return new PagedList<Transaction>(items, count, transactionParams.PageNumber, transactionParams.PageSize);
         }
 
         public async Task<Transaction> MakeTransaction(TransactionDTO transaction, UserProfile payer)
@@ -43,14 +54,14 @@ namespace BlackCaviarBank.Infrastructure.Business
 
             bool isSucceeded = false;
 
-            Card payingCard = transaction.From.Length == 16 ? (await cardRepository.Get(c => c.CardNumber.Equals(transaction.From))).First() : null;
-            Account payingAccount = transaction.From.Length == 20 ? (await accountRepository.Get(a => a.AccountNumber.Equals(transaction.From))).First() : null;
-            Card receivingCard = transaction.To.Length == 16 ? (await cardRepository.Get(c => c.CardNumber.Equals(transaction.To))).First() : null;
-            Account receivingAccount = transaction.To.Length == 20 ? (await accountRepository.Get(a => a.AccountNumber.Equals(transaction.To))).First() : null;
+            Card payingCard = transaction.From.Length == 16 ? (await cardRepository.GetByCriterion(c => c.CardNumber.Equals(transaction.From))) : null;
+            Account payingAccount = transaction.From.Length == 20 ? (await accountRepository.GetByCriterion(a => a.AccountNumber.Equals(transaction.From))) : null;
+            Card receivingCard = transaction.To.Length == 16 ? (await cardRepository.GetByCriterion(c => c.CardNumber.Equals(transaction.To))) : null;
+            Account receivingAccount = transaction.To.Length == 20 ? (await accountRepository.GetByCriterion(a => a.AccountNumber.Equals(transaction.To))) : null;
 
             if (payingCard != null && receivingCard != null)
             {
-                if (!payingCard.IsBlocked && payingCard.Balance > transaction.Amount)
+                if (!payingCard.IsBlocked && payingCard.Balance > transaction.Amount && payingCard.OwnerId.Equals(payer.Id))
                 {
                     payingCard.Balance -= transaction.Amount;
                     receivingCard.Balance += transaction.Amount;
@@ -61,7 +72,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
             else if (payingCard != null && receivingAccount != null)
             {
-                if (!payingCard.IsBlocked && payingCard.Balance > transaction.Amount)
+                if (!payingCard.IsBlocked && payingCard.Balance > transaction.Amount && payingCard.OwnerId.Equals(payer.Id))
                 {
                     payingCard.Balance -= transaction.Amount;
                     receivingAccount.Balance += transaction.Amount;
@@ -72,7 +83,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
             else if (payingAccount != null && receivingCard != null)
             {
-                if (!payingAccount.IsBlocked && payingAccount.Balance > transaction.Amount)
+                if (!payingAccount.IsBlocked && payingAccount.Balance > transaction.Amount && payingAccount.OwnerId.Equals(payer.Id))
                 {
                     payingAccount.Balance -= transaction.Amount;
                     receivingCard.Balance += transaction.Amount;
@@ -83,7 +94,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             }
             else if (payingAccount != null && receivingAccount != null)
             {
-                if (!payingAccount.IsBlocked && payingAccount.Balance > transaction.Amount)
+                if (!payingAccount.IsBlocked && payingAccount.Balance > transaction.Amount && payingAccount.OwnerId.Equals(payer.Id))
                 {
                     payingAccount.Balance -= transaction.Amount;
                     receivingAccount.Balance += transaction.Amount;
@@ -105,10 +116,10 @@ namespace BlackCaviarBank.Infrastructure.Business
         {
             var transaction = await transactionRepository.GetById(id);
 
-            Card payingCard = transaction.To.Length == 16 ? (await cardRepository.Get(c => c.CardNumber.Equals(transaction.To))).First() : null;
-            Account payingAccount = transaction.To.Length == 20 ? (await accountRepository.Get(a => a.AccountNumber.Equals(transaction.To))).First() : null;
-            Card receivingCard = transaction.From.Length == 16 ? (await cardRepository.Get(c => c.CardNumber.Equals(transaction.From))).First() : null;
-            Account receivingAccount = transaction.From.Length == 20 ? (await accountRepository.Get(a => a.AccountNumber.Equals(transaction.From))).First() : null;
+            Card payingCard = transaction.To.Length == 16 ? (await cardRepository.GetByCriterion(c => c.CardNumber.Equals(transaction.To))) : null;
+            Account payingAccount = transaction.To.Length == 20 ? (await accountRepository.GetByCriterion(a => a.AccountNumber.Equals(transaction.To))) : null;
+            Card receivingCard = transaction.From.Length == 16 ? (await cardRepository.GetByCriterion(c => c.CardNumber.Equals(transaction.From))) : null;
+            Account receivingAccount = transaction.From.Length == 20 ? (await accountRepository.GetByCriterion(a => a.AccountNumber.Equals(transaction.From))) : null;
 
             if (payingCard != null && receivingCard != null)
             {

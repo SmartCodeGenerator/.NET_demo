@@ -22,7 +22,7 @@ namespace BlackCaviarBank.Infrastructure.Business
             this.generatorService = generatorService;
         }
 
-        public async Task CreateAccount(AccountDTO account, UserProfile currentUser)
+        public async Task<Account> CreateAccount(AccountDTO account, UserProfile currentUser)
         {
             var record = mapper.Map<Account>(account);
             record.AccountNumber = generatorService.GetGeneratedAccountNumber(await repository.GetAll());
@@ -30,6 +30,8 @@ namespace BlackCaviarBank.Infrastructure.Business
             record.Owner = currentUser;
 
             await repository.Create(record);
+
+            return record;
         }
 
         public void DeleteAccount(Guid id)
@@ -51,8 +53,6 @@ namespace BlackCaviarBank.Infrastructure.Business
         {
             var record = await repository.GetById(id);
             record = mapper.Map(account, record);
-
-            repository.Update(record);
         }
     }
 }

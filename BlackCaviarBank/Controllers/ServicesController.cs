@@ -61,7 +61,7 @@ namespace BlackCaviarBank.Controllers
         [HttpGet("UserSubscriptions")]
         public async Task<IActionResult> GetUserSubscriptions([FromQuery] ServiceParams serviceParams)
         {
-            var result = await subscriptionService.GetUserSubscriptions(await userManager.GetUserAsync(User), serviceParams);
+            var result = await subscriptionService.GetUserSubscriptions(await userManager.FindByNameAsync(User.Identity.Name), serviceParams);
 
             var metadata = new
             {
@@ -129,9 +129,9 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await userManager.GetUserAsync(User);
-                await subscriptionService.SubscribeOnService(user, (await unitOfWork.Cards.Get(c => c.CardNumber.Equals(data.CardNumber))).First(), data.ServiceId);
-                unitOfWork.UserProfiles.Update(user);
+                var user = await userManager.FindByNameAsync(User.Identity.Name);
+                var card = await unitOfWork.Cards.GetByNumber(data.CardNumber);
+                await subscriptionService.SubscribeOnService(user, card, data.ServiceId);
                 await unitOfWork.SaveChanges();
 
                 return NoContent();
@@ -143,9 +143,8 @@ namespace BlackCaviarBank.Controllers
         [HttpPut("UnsubscribeFromService/{id}")]
         public async Task<IActionResult> UnsubscribeFromService(Guid id)
         {
-            var user = await userManager.GetUserAsync(User);
+            var user = await userManager.FindByNameAsync(User.Identity.Name);
             await subscriptionService.UnsubscribeFromService(user, id);
-            unitOfWork.UserProfiles.Update(user);
             await unitOfWork.SaveChanges();
 
             return NoContent();

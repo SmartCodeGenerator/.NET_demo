@@ -14,7 +14,7 @@ namespace BlackCaviarBank.Services.Interfaces
         Task<Service> CreateService(ServiceDTO service);
         Task UpdateService(ServiceDTO service, Guid id);
         void RemoveService(Guid id);
-        Task SubscribeOnService(UserProfile subscriber, Card card, Guid serviceId);
+        Task SubscribeOnService(UserProfile subscriber, Card card, string serviceId);
         Task UnsubscribeFromService(UserProfile subscriber, Guid id);
     }
 }

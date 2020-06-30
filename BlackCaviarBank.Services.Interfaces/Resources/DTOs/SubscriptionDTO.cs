@@ -9,6 +9,6 @@ namespace BlackCaviarBank.Services.Interfaces.Resources.DTOs
         public string CardNumber { get; set; }
 
         [Required]
-        public Guid ServiceId { get; set; }
+        public string ServiceId { get; set; }
     }
 }

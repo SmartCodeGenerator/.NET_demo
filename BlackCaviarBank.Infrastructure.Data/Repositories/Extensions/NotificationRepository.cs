@@ -4,6 +4,6 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories.Extensions
 {
     public class NotificationRepository : BaseRepository<Notification>
     {
-        public NotificatiobRepository(ApplicationContext applicationContext) : base(applicationContext) { }
+        public NotificationRepository(ApplicationContext applicationContext) : base(applicationContext) { }
     }
 }

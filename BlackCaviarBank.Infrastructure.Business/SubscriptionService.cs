@@ -5,7 +5,6 @@ using BlackCaviarBank.Domain.Interfaces;
 using BlackCaviarBank.Services.Interfaces;
 using BlackCaviarBank.Services.Interfaces.Resources.DTOs;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -49,16 +48,15 @@ namespace BlackCaviarBank.Infrastructure.Business
             serviceRepository.Delete(id);
         }
 
-        public async Task SubscribeOnService(UserProfile subscriber, Card card, Guid serviceId)
+        public async Task SubscribeOnService(UserProfile subscriber, Card card, string serviceId)
         {
-            var service = await serviceRepository.GetById(serviceId);
+            var service = await serviceRepository.GetById(Guid.Parse(serviceId));
             if (!card.IsBlocked && card.Balance >= service.Price)
             {
                 var link = new SubscriptionSubscriber { Subscriber = subscriber, Subscription = service };
                 subscriber.SubscriptionSubscribers.Add(link);
                 service.SubscriptionSubscribers.Add(link);
                 card.Balance -= service.Price;
-                serviceRepository.Update(service);
             }
         }
 
@@ -70,7 +68,6 @@ namespace BlackCaviarBank.Infrastructure.Business
             {
                 subscriber.SubscriptionSubscribers.Remove(link);
                 service.SubscriptionSubscribers.Remove(link);
-                serviceRepository.Update(service);
             }
         }
 
@@ -78,7 +75,6 @@ namespace BlackCaviarBank.Infrastructure.Business
         {
             var record = await serviceRepository.GetById(id);
             mapper.Map(service, record);
-            serviceRepository.Update(record);
         }
     }
 }

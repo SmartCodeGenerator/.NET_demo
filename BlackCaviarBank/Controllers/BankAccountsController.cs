@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace BlackCaviarBank.Controllers
@@ -33,7 +32,7 @@ namespace BlackCaviarBank.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAccounts([FromQuery] BankAccountParams bankAccountParams)
         {
-            var result = await accountService.GetAccounts(await userManager.GetUserAsync(User), bankAccountParams);
+            var result = await accountService.GetAccounts(await userManager.FindByNameAsync(User.Identity.Name), bankAccountParams);
 
             var metadata = new
             {
@@ -61,12 +60,22 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                await accountService.CreateAccount(data, await userManager.GetUserAsync(User));
+                var result = await accountService.CreateAccount(data, await userManager.FindByNameAsync(User.Identity.Name));
                 await unitOfWork.SaveChanges();
 
                 return CreatedAtAction(nameof(GetAccount),
-                    new { (await unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name))).FirstOrDefault().AccountId },
-                    (await unitOfWork.Accounts.Get(a => a.Name.Equals(data.Name))).FirstOrDefault());
+                    new { id = result.AccountId },
+                    new
+                    {
+                        id = result.AccountId,
+                        number = result.AccountNumber,
+                        name = result.Name,
+                        openingDate = result.OpeningDate,
+                        balance = result.Balance,
+                        interestRate = result.InterestRate,
+                        isBlocked = result.IsBlocked,
+                        ownerId = result.OwnerId
+                    });
             }
             return Conflict(ModelState);
         }

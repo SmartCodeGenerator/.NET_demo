@@ -7,11 +7,11 @@ namespace BlackCaviarBank.Infrastructure.Data
 {
     public class ApplicationContext : IdentityDbContext<UserProfile>
     {
-        public DbSet<Account> Accounts { get; set; }
-        public DbSet<Card> Cards { get; set; }
-        public DbSet<Notification> Notifications { get; set; }
-        public DbSet<Service> Services { get; set; }
-        public DbSet<Transaction> Transactions { get; set; }
+        public virtual DbSet<Account> Accounts { get; set; }
+        public virtual DbSet<Card> Cards { get; set; }
+        public virtual DbSet<Notification> Notifications { get; set; }
+        public virtual DbSet<Service> Services { get; set; }
+        public virtual DbSet<Transaction> Transactions { get; set; }
 
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options)
         {

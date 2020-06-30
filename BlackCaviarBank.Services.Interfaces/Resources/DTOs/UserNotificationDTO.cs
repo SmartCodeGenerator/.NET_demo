@@ -10,8 +10,5 @@ namespace BlackCaviarBank.Services.Interfaces.Resources.DTOs
 
         [Required]
         public Guid ServiceSenderId { get; set; }
-
-        [Required]
-        public string UserReceiverId { get; set; }
     }
 }

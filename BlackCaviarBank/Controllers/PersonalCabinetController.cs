@@ -32,7 +32,7 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                personalCabinetService.ChangeProfileInfo(await userManager.GetUserAsync(User), data);
+                personalCabinetService.ChangeProfileInfo(await userManager.FindByNameAsync(User.Identity.Name), data);
                 await unitOfWork.SaveChanges();
                 return NoContent();
             }
@@ -42,7 +42,7 @@ namespace BlackCaviarBank.Controllers
         [HttpPut("ChangeProfileImage")]
         public async Task<IActionResult> ChangeProfileImage(string path)
         {
-            await personalCabinetService.ChangeProfileImage(await userManager.GetUserAsync(User), path);
+            await personalCabinetService.ChangeProfileImage(await userManager.FindByNameAsync(User.Identity.Name), path);
             await unitOfWork.SaveChanges();
             return NoContent();
         }
@@ -52,7 +52,7 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                await personalCabinetService.ChangePassword(await userManager.GetUserAsync(User), data);
+                await personalCabinetService.ChangePassword(await userManager.FindByNameAsync(User.Identity.Name), data);
                 await unitOfWork.SaveChanges();
                 return NoContent();
             }

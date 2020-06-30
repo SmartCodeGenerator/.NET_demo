@@ -32,7 +32,8 @@ namespace BlackCaviarBank.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTransactions([FromQuery] TransactionParams transactionParams)
         {
-            var result = await transactionService.GetTransactionsForCurrentUser(await userManager.GetUserAsync(User), transactionParams);
+            var user = await userManager.FindByNameAsync(User.Identity.Name);
+            var result = await transactionService.GetTransactionsForCurrentUser(user, transactionParams);
 
             var metadata = new
             {
@@ -62,12 +63,22 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await transactionService.MakeTransaction(data, await userManager.GetUserAsync(User));
+                var result = await transactionService.MakeTransaction(data, await userManager.FindByNameAsync(User.Identity.Name));
                 await unitOfWork.SaveChanges();
 
                 if (result != null)
                 {
-                    return CreatedAtAction(nameof(GetTransaction), new { result.TransactionId }, result);
+                    return CreatedAtAction(nameof(GetTransaction),
+                        new { id = result.TransactionId },
+                        new
+                        { 
+                            id = result.TransactionId,
+                            from = result.From,
+                            to = result.To,
+                            amount = result.Amount,
+                            date = result.Date,
+                            payerId = result.PayerId
+                        });
                 }
                 else
                 {
@@ -77,7 +88,7 @@ namespace BlackCaviarBank.Controllers
             return Conflict(ModelState);
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> RollbackTransaction(Guid id)
         {

@@ -8,11 +8,7 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
     {
         private readonly ApplicationContext applicationContext;
 
-        private AccountRepository accountRepository;
         private CardRepository cardRepository;
-        private NotificationRepository notificationRepository;
-        private ServiceRepository serviceRepository;
-        private TransactionRepository transactionRepository;
         private UserProfileRepository userProfileRepository;
 
         private bool disposed = false;
@@ -20,18 +16,6 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
         public UnitOfWork(ApplicationContext applicationContext)
         {
             this.applicationContext = applicationContext;
-        }
-
-        public AccountRepository Accounts
-        {
-            get
-            {
-                if (accountRepository == null)
-                {
-                    accountRepository = new AccountRepository(applicationContext);
-                }
-                return accountRepository;
-            }
         }
 
         public CardRepository Cards
@@ -43,42 +27,6 @@ namespace BlackCaviarBank.Infrastructure.Data.UnitOfWork
                     cardRepository = new CardRepository(applicationContext);
                 }
                 return cardRepository;
-            }
-        }
-
-        public NotificationRepository Notifications
-        {
-            get
-            {
-                if (notificationRepository == null)
-                {
-                    notificationRepository = new NotificationRepository(applicationContext);
-                }
-                return notificationRepository;
-            }
-        }
-
-        public ServiceRepository Services
-        {
-            get
-            {
-                if (serviceRepository == null)
-                {
-                    serviceRepository = new ServiceRepository(applicationContext);
-                }
-                return serviceRepository;
-            }
-        }
-
-        public TransactionRepository Transactions
-        {
-            get
-            {
-                if (transactionRepository == null)
-                {
-                    transactionRepository = new TransactionRepository(applicationContext);
-                }
-                return transactionRepository;
             }
         }
 

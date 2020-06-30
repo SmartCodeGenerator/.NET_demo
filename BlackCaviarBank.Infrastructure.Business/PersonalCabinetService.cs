@@ -34,32 +34,27 @@ namespace BlackCaviarBank.Infrastructure.Business
         {
             var account = await accountRepository.GetById(id);
             account.IsBlocked = true;
-            accountRepository.Update(account);
         }
 
         public async Task BlockCard(Guid id)
         {
             var card = await cardRepository.GetById(id);
             card.IsBlocked = true;
-            cardRepository.Update(card);
         }
 
         public async Task ChangePassword(UserProfile user, ChangePasswordDTO changePassword)
         {
             await userManager.ChangePasswordAsync(user, changePassword.OldPassword, changePassword.NewPassword);
-            userRepository.Update(user);
         }
 
         public async Task ChangeProfileImage(UserProfile user, string imagePath)
         {
             user.ProfileImage = await ReadAllBytesAsync(imagePath);
-            userRepository.Update(user);
         }
 
         public void ChangeProfileInfo(UserProfile user, ProfileInfoDTO profileInfo)
         {
             mapper.Map(profileInfo, user);
-            userRepository.Update(user);
         }
 
         public async Task ForgotPassword(ForgotPasswordDTO data, string callbackUrl)
@@ -72,21 +67,18 @@ namespace BlackCaviarBank.Infrastructure.Business
         {
             var user = (await userRepository.Get(u => u.Email.Equals(data.Email))).First();
             await userManager.ResetPasswordAsync(user, data.Code, data.Password);
-            userRepository.Update(user);
         }
 
         public async Task UnblockAccount(Guid id)
         {
             var account = await accountRepository.GetById(id);
             account.IsBlocked = false;
-            accountRepository.Update(account);
         }
 
         public async Task UnblockCard(Guid id)
         {
             var card = await cardRepository.GetById(id);
             card.IsBlocked = false;
-            cardRepository.Update(card);
         }
     }
 }

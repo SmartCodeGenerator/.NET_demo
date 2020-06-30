@@ -10,8 +10,8 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories
     public class BaseRepository<TEntity> : IRepository<TEntity> 
         where TEntity : class
     {
-        private readonly ApplicationContext applicationContext;
-        private readonly DbSet<TEntity> dbSet;
+        protected readonly ApplicationContext applicationContext;
+        protected readonly DbSet<TEntity> dbSet;
 
         public BaseRepository(ApplicationContext applicationContext)
         {
@@ -19,12 +19,12 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories
             dbSet = applicationContext.Set<TEntity>();
         }
 
-        public async Task Create(TEntity item)
+        public virtual async Task Create(TEntity item)
         {
             await dbSet.AddAsync(item);
         }
 
-        public void Delete(Guid id)
+        public virtual void Delete(Guid id)
         {
             TEntity entity = dbSet.Find(id);
 
@@ -34,28 +34,36 @@ namespace BlackCaviarBank.Infrastructure.Data.Repositories
             }
         }
 
-        public async Task<PagedList<TEntity>> Get(Func<TEntity, bool> predicate, QueryParams queryParams = null)
-        {
-            return queryParams != null ? await PagedList<TEntity>.ToPagedList(dbSet.AsNoTracking().Where(predicate).AsQueryable(), queryParams.PageNumber, queryParams.PageSize) :
-                await PagedList<TEntity>.AsSimpleData(dbSet.AsNoTracking().Where(predicate).AsQueryable());
-        }
-
-        public async Task<PagedList<TEntity>> GetAll(QueryParams queryParams = null)
+        public virtual async Task<PagedList<TEntity>> Get(Func<TEntity, bool> predicate, QueryParams queryParams = null)
         {
             dbSet.Load();
-
-            return queryParams != null ? await PagedList<TEntity>.ToPagedList(dbSet.AsNoTracking().AsQueryable(), queryParams.PageNumber, queryParams.PageSize) :
-                await PagedList<TEntity>.AsSimpleData(dbSet.AsNoTracking().AsQueryable());
+            var simpleData = await dbSet.AsNoTracking().ToListAsync();
+            return queryParams != null ? await PagedList<TEntity>.ToPagedList(dbSet.AsNoTracking().Where(predicate).AsQueryable(), queryParams.PageNumber, queryParams.PageSize) :
+                new PagedList<TEntity>(simpleData.Where(predicate).ToList());
         }
 
-        public async Task<TEntity> GetById(Guid id)
+        public virtual async Task<PagedList<TEntity>> GetAll(QueryParams queryParams = null)
+        {
+            dbSet.Load();
+            var simpleData = await dbSet.AsNoTracking().ToListAsync();
+            return queryParams != null ? await PagedList<TEntity>.ToPagedList(dbSet.AsNoTracking().AsQueryable(), queryParams.PageNumber, queryParams.PageSize) :
+                 new PagedList<TEntity>(simpleData);
+        }
+
+        public virtual async Task<TEntity> GetById(Guid id)
         {
             return await dbSet.FindAsync(id);
         }
 
-        public void Update(TEntity item)
+        public virtual void Update(TEntity entity)
         {
-            applicationContext.Entry(item).State = EntityState.Modified;
+            dbSet.Update(entity);
+        }
+
+        public virtual async Task<TEntity> GetByCriterion(System.Linq.Expressions.Expression<Func<TEntity, bool>> predicate)
+        {
+            var entity = await dbSet.FirstOrDefaultAsync(predicate);
+            return entity;
         }
     }
 }

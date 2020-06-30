@@ -10,7 +10,7 @@ namespace BlackCaviarBank.Services.Interfaces
     {
         Task<PagedList<Account>> GetAccounts(UserProfile currentUser, BankAccountParams bankAccountParams);
         Task<Account> GetAccount(Guid id);
-        Task CreateAccount(AccountDTO account, UserProfile currentUser);
+        Task<Account> CreateAccount(AccountDTO account, UserProfile currentUser);
         Task UpdateAccount(Guid id, AccountDTO account);
         void DeleteAccount(Guid id);
     }

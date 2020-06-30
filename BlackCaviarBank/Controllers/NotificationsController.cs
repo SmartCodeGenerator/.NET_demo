@@ -49,7 +49,7 @@ namespace BlackCaviarBank.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "admin")]
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetNotification(Guid id)
         {
@@ -60,7 +60,7 @@ namespace BlackCaviarBank.Controllers
         [HttpGet("ForCurrentUser")]
         public async Task<IActionResult> GetAllForCurrentUser([FromQuery] NotificationParams notificationParams)
         {
-            var result = await notificationService.GetNotificationsForUser(await userManager.GetUserAsync(User), notificationParams);
+            var result = await notificationService.GetNotificationsForUser(await userManager.FindByNameAsync(User.Identity.Name), notificationParams);
 
             var metadata = new
             {
@@ -83,7 +83,7 @@ namespace BlackCaviarBank.Controllers
         {
             if (ModelState.IsValid)
             {
-                var result = await notificationService.NotifyUser(await userManager.GetUserAsync(User), data);
+                var result = await notificationService.NotifyUser(await userManager.FindByNameAsync(User.Identity.Name), data);
                 await unitOfWork.SaveChanges();
 
                 if (result != null)
